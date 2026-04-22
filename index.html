@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSINT & Digital Forensics — Ultimate Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#020406;--s1:#040810;--s2:#06101a;
+  --card:#080f1c;--card2:#0a1422;--card3:#0d1828;
+  --b1:#0f2040;--b2:#183060;--b3:#224080;
+  --c:#00ffcc;--cd:rgba(0,255,204,.1);--cg:rgba(0,255,204,.04);
+  --bl:#1e90ff;--bld:rgba(30,144,255,.1);
+  --pu:#b000ff;--pud:rgba(176,0,255,.1);
+  --or:#ff7000;--ord:rgba(255,112,0,.1);
+  --re:#ff1a44;--red:rgba(255,26,68,.1);
+  --gr:#00e87a;--grd:rgba(0,232,122,.1);
+  --ye:#ffd400;--yed:rgba(255,212,0,.1);
+  --pi:#ff0066;--pid:rgba(255,0,102,.1);
+  --te:#00e5d4;
+  --tx:#8ab0cc;--tx2:#406080;--mu:#162840;
+  --orb:'Orbitron',sans-serif;
+  --mo:'IBM Plex Mono',monospace;
+  --bd:'Rajdhani',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font-family:var(--bd);font-size:14px;line-height:1.75;overflow-x:hidden}
+
+/* ═══ GLOBAL CANVAS ═══ */
+#gc{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ═══ SCANLINES ═══ */
+.sl{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,204,.006) 2px,rgba(0,255,204,.006) 4px);
+  animation:slm 10s linear infinite}
+@keyframes slm{to{background-position:0 40px}}
+
+/* ═══ CURSOR ═══ */
+#cur{position:fixed;width:500px;height:500px;pointer-events:none;z-index:2;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(0,255,204,.025) 0%,transparent 65%);border-radius:50%}
+
+/* ═══ VIGNETTE ═══ */
+.vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 50%,rgba(2,4,6,.6) 100%)}
+
+/* ═══ LOADER ═══ */
+#ldr{position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.ldr-title{font-family:var(--orb);font-size:52px;font-weight:900;color:#fff;letter-spacing:-3px;
+  text-shadow:0 0 60px rgba(0,255,204,.5),0 0 120px rgba(0,255,204,.2);line-height:1}
+.ldr-title span{color:var(--c)}
+.ldr-ring{position:relative;width:80px;height:80px}
+.ldr-ring svg{animation:spin 2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ldr-ring-track{fill:none;stroke:var(--mu);stroke-width:3}
+.ldr-ring-fill{fill:none;stroke:var(--c);stroke-width:3;stroke-dasharray:220;stroke-linecap:round;
+  animation:ringAnim 2s ease-in-out infinite}
+@keyframes ringAnim{0%{stroke-dashoffset:220}50%{stroke-dashoffset:60}100%{stroke-dashoffset:220}}
+.ldr-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mo);font-size:14px;color:var(--c)}
+.ldr-log{font-family:var(--mo);font-size:10px;color:var(--tx2);letter-spacing:1px;height:14px}
+.ldr-bar{width:260px;height:2px;background:var(--b1);border-radius:2px;overflow:hidden}
+.ldr-bar-fill{height:100%;background:linear-gradient(90deg,var(--c),var(--bl),var(--pu));
+  animation:lbf 3s ease forwards}
+@keyframes lbf{0%{width:0}100%{width:100%}}
+@keyframes fdOut{to{opacity:0;transform:scale(1.02);pointer-events:none}}
+
+/* ═══ HERO ═══ */
+#hero{position:relative;z-index:10;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:40px 20px;overflow:hidden}
+
+/* HEX GRID BG */
+.hxbg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hxbg svg{width:100%;height:100%;opacity:.6}
+
+/* ORBITING RINGS */
+.orbit-wrap{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+.orbit{position:absolute;border-radius:50%;border:1px solid rgba(0,255,204,.06)}
+.orbit:nth-child(1){width:500px;height:500px;animation:rot 20s linear infinite}
+.orbit:nth-child(2){width:700px;height:700px;animation:rot 30s linear infinite reverse}
+.orbit:nth-child(3){width:900px;height:900px;animation:rot 45s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.orbit-dot{position:absolute;width:6px;height:6px;border-radius:50%;top:-3px;left:50%;transform:translateX(-50%)}
+.orbit:nth-child(1) .orbit-dot{background:var(--c);box-shadow:0 0 12px var(--c)}
+.orbit:nth-child(2) .orbit-dot{background:var(--bl);box-shadow:0 0 12px var(--bl)}
+.orbit:nth-child(3) .orbit-dot{background:var(--pu);box-shadow:0 0 12px var(--pu)}
+
+/* GLITCH */
+.glitch{font-family:var(--orb);font-size:clamp(30px,6.5vw,70px);font-weight:900;
+  color:#fff;letter-spacing:-2px;line-height:1;position:relative;
+  text-shadow:0 0 80px rgba(0,255,204,.25)}
+.glitch::before,.glitch::after{content:attr(data-t);position:absolute;top:0;left:0;width:100%}
+.glitch::before{color:var(--c);animation:ga 5s infinite;
+  clip-path:polygon(0 0,100% 0,100% 38%,0 38%);opacity:.55}
+.glitch::after{color:var(--pi);animation:gb 5s infinite;
+  clip-path:polygon(0 65%,100% 65%,100% 100%,0 100%);opacity:.55}
+@keyframes ga{0%,88%,100%{transform:translate(0)}89%{transform:translate(-5px,2px)}91%{transform:translate(5px,-2px)}93%{transform:translate(0)}}
+@keyframes gb{0%,88%,100%{transform:translate(0)}89%{transform:translate(5px,-2px)}91%{transform:translate(-5px,2px)}93%{transform:translate(0)}}
+
+.hero-eyebrow{font-family:var(--mo);font-size:clamp(9px,1.4vw,12px);color:var(--c);
+  letter-spacing:6px;text-transform:uppercase;margin-bottom:14px;animation:fup 1s .2s both}
+.hero-edition{font-family:var(--orb);font-size:clamp(12px,2.5vw,20px);
+  color:rgba(255,255,255,.2);letter-spacing:5px;font-weight:400;margin-top:8px}
+.hero-desc{font-family:var(--mo);font-size:clamp(9px,1.3vw,11px);
+  color:var(--tx2);letter-spacing:2px;margin:14px 0 28px;animation:fup 1s .5s both;max-width:700px}
+@keyframes fup{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO STATS */
+.hstats{display:flex;gap:0;border:1px solid var(--b1);border-radius:12px;overflow:hidden;
+  background:rgba(0,255,204,.015);animation:fup 1s .8s both;margin-bottom:28px}
+.hs{padding:18px 28px;text-align:center;border-right:1px solid var(--b1);position:relative;cursor:default;transition:.25s}
+.hs:last-child{border-right:none}
+.hs:hover{background:rgba(0,255,204,.04)}
+.hs-n{font-family:var(--orb);font-size:26px;font-weight:900;line-height:1;
+  background:linear-gradient(135deg,var(--c),var(--bl));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hs-l{font-family:var(--mo);font-size:8px;color:var(--tx2);letter-spacing:2px;margin-top:4px}
+
+/* ENTER BTN */
+.ebtn{font-family:var(--orb);font-size:11px;font-weight:700;letter-spacing:3px;
+  color:#000;background:var(--c);border:none;padding:15px 44px;cursor:pointer;
+  clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);
+  transition:all .3s;animation:fup 1s 1.1s both;position:relative;overflow:hidden}
+.ebtn::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);
+  transform:translateX(-100%);transition:.5s}
+.ebtn:hover{transform:scale(1.07);box-shadow:0 0 50px rgba(0,255,204,.45)}
+.ebtn:hover::before{transform:translateX(100%)}
+.scrl{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+  font-family:var(--mo);font-size:8px;color:rgba(0,255,204,.3);letter-spacing:3px;
+  animation:bo 2.5s infinite}
+@keyframes bo{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* ═══ APP ═══ */
+#app{display:none;position:relative;z-index:10}
+
+/* ═══ NAV ═══ */
+.nav{position:sticky;top:0;z-index:200;background:rgba(2,4,6,.96);
+  backdrop-filter:blur(28px);border-bottom:1px solid var(--b1);
+  display:flex;align-items:stretch;overflow-x:auto;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nbrand{font-family:var(--orb);font-size:12px;color:var(--c);letter-spacing:2px;
+  padding:0 22px;border-right:1px solid var(--b1);display:flex;align-items:center;
+  flex-shrink:0;white-space:nowrap;position:relative}
+.nbrand::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--c),var(--bl));opacity:.5}
+.ntabs{display:flex;flex:1}
+.nt{flex-shrink:0;padding:0 16px;font-family:var(--mo);font-size:9px;color:var(--tx2);
+  cursor:pointer;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap;
+  display:flex;align-items:center;gap:5px;height:52px;position:relative}
+.nt:hover{color:var(--tx);background:rgba(0,255,204,.02)}
+.nt.active{color:var(--c);border-bottom-color:var(--c)}
+.nt .ndot{width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0;transition:.2s}
+.nt.active .ndot{opacity:1;animation:bk 1.5s infinite;box-shadow:0 0 6px currentColor}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ═══ WRAP ═══ */
+.wrap{max-width:1080px;margin:0 auto;padding:36px 20px 120px;position:relative;z-index:10}
+.sec{display:none;animation:si .4s ease}
+.sec.active{display:block}
+@keyframes si{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══ SECTION HEADER ═══ */
+.sh{display:flex;align-items:flex-start;gap:18px;margin-bottom:32px;padding-bottom:22px;
+  border-bottom:1px solid var(--b1);position:relative;overflow:hidden}
+.sh::after{content:'';position:absolute;bottom:-1px;left:0;width:140px;height:2px;
+  background:linear-gradient(90deg,var(--c),transparent)}
+.sh-ic{width:58px;height:58px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:28px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(0,255,204,.08),transparent);border:1px solid var(--b1);
+  position:relative;overflow:hidden}
+.sh-ic::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at top,rgba(0,255,204,.06),transparent)}
+.sh-t{font-family:var(--orb);font-size:24px;font-weight:700;color:#fff;line-height:1.15;
+  text-shadow:0 0 30px rgba(0,255,204,.18)}
+.sh-s{font-family:var(--mo);font-size:10px;color:var(--tx2);margin-top:5px;letter-spacing:1px}
+
+/* ═══ CARDS ═══ */
+.card{background:var(--card);border:1px solid var(--b1);border-radius:14px;
+  padding:26px;margin-bottom:22px;position:relative;overflow:hidden;
+  transition:border-color .3s,box-shadow .3s,transform .25s}
+.card:hover{border-color:var(--b2);box-shadow:0 0 50px rgba(0,255,204,.04);transform:translateY(-2px)}
+.card::before,.card::after{content:'';position:absolute;width:16px;height:16px;
+  transition:opacity .3s;opacity:0;border-color:rgba(0,255,204,.3)}
+.card:hover::before,.card:hover::after{opacity:1}
+.card::before{top:9px;left:9px;border-top:1px solid;border-left:1px solid}
+.card::after{bottom:9px;right:9px;border-bottom:1px solid;border-right:1px solid}
+.cs{position:absolute;top:0;left:0;right:0;height:2px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.ct{font-family:var(--orb);font-size:13px;font-weight:600;color:#daeeff;
+  display:flex;align-items:center;gap:8px}
+
+/* ═══ BADGES ═══ */
+.badge,.bx{display:inline-flex}
+.bx{gap:5px;flex-wrap:wrap}
+.badge{font-family:var(--mo);font-size:8px;padding:3px 10px;letter-spacing:1.5px;
+  clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+.b1{background:var(--grd);color:var(--gr);border:1px solid rgba(0,232,122,.25)}
+.b2{background:var(--yed);color:var(--ye);border:1px solid rgba(255,212,0,.25)}
+.b3{background:var(--red);color:var(--re);border:1px solid rgba(255,26,68,.25)}
+.b4{background:var(--pid);color:var(--pi);border:1px solid rgba(255,0,102,.25)}
+
+/* ═══ TERMINAL ═══ */
+.term{background:#000307;border:1px solid var(--b1);border-radius:12px;overflow:hidden;margin:14px 0;position:relative}
+.term::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,204,.3),transparent)}
+.th{display:flex;align-items:center;gap:8px;padding:10px 18px;
+  background:rgba(0,255,204,.02);border-bottom:1px solid var(--b1)}
+.dots span{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:1px}
+.dr{background:#ff5f57}.dy{background:#febc2e}.dg{background:#28c840}
+.tl{font-family:var(--mo);font-size:9px;color:var(--tx2);margin:0 auto;letter-spacing:2px}
+.tb{padding:18px 20px;font-family:var(--mo);font-size:11.5px;line-height:2;overflow-x:auto}
+.p{color:var(--c)}.cmd{color:#ffffff}.cm{color:var(--mu);font-style:italic}
+.out{color:var(--tx2);font-size:10.5px}.ok{color:var(--gr)}.warn{color:var(--ye)}.err{color:var(--re)}
+.hi{color:#fff;font-weight:600}.val{color:#ffd080}
+
+/* ═══ ALERT BOXES ═══ */
+.al{border-radius:10px;padding:15px 18px;margin:14px 0;display:flex;gap:13px;position:relative;overflow:hidden}
+.al::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.al-b{flex:1}.al-t{font-family:var(--mo);font-size:9px;letter-spacing:2px;font-weight:700;margin-bottom:5px}
+.al-x{font-size:12px;line-height:1.65}
+.a-c{background:var(--cd);border:1px solid rgba(0,255,204,.18)}.a-c::before{background:var(--c)}.a-c .al-t{color:var(--c)}
+.a-y{background:var(--yed);border:1px solid rgba(255,212,0,.18)}.a-y::before{background:var(--ye)}.a-y .al-t{color:var(--ye)}
+.a-r{background:var(--red);border:1px solid rgba(255,26,68,.18)}.a-r::before{background:var(--re)}.a-r .al-t{color:var(--re)}
+.a-p{background:var(--pid);border:1px solid rgba(255,0,102,.18)}.a-p::before{background:var(--pi)}.a-p .al-t{color:var(--pi)}
+.a-b{background:var(--bld);border:1px solid rgba(30,144,255,.18)}.a-b::before{background:var(--bl)}.a-b .al-t{color:var(--bl)}
+.a-g{background:var(--grd);border:1px solid rgba(0,232,122,.18)}.a-g::before{background:var(--gr)}.a-g .al-t{color:var(--gr)}
+
+/* ═══ GRIDS ═══ */
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin:14px 0}
+.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:10px;margin:12px 0}
+.g4{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:10px 0}
+
+/* ═══ TOOL TILE ═══ */
+.tool{background:rgba(0,255,204,.018);border:1px solid var(--b1);border-radius:10px;
+  padding:16px;transition:all .25s;position:relative;overflow:hidden}
+.tool::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,255,204,.06),transparent);opacity:0;transition:.3s}
+.tool:hover{border-color:var(--c);box-shadow:0 0 24px rgba(0,255,204,.07);transform:translateY(-3px)}
+.tool:hover::after{opacity:1}
+.tn{font-family:var(--mo);font-size:12px;color:var(--c);font-weight:600;margin-bottom:5px}
+.td{font-size:11px;color:var(--tx2);line-height:1.55}
+.tc{font-family:var(--mo);font-size:9px;color:var(--mu);margin-top:6px}
+.tlink{display:block;font-family:var(--mo);font-size:9px;color:var(--bl);margin-top:6px;
+  text-decoration:none;opacity:.7;transition:.2s}
+.tlink:hover{opacity:1;color:var(--c)}
+
+/* ═══ LIST ═══ */
+ul.l{list-style:none;padding:0}
+ul.l li{padding:7px 0 7px 20px;position:relative;font-size:12px;
+  border-bottom:1px solid rgba(255,255,255,.02);transition:padding-left .2s}
+ul.l li:hover{padding-left:26px;color:#fff}
+ul.l li:last-child{border-bottom:none}
+ul.l li::before{content:'▸';position:absolute;left:0;color:var(--c);font-size:10px;top:9px;transition:.2s}
+ul.l li:hover::before{transform:translateX(3px)}
+ul.l li strong{color:#c8e0ff}
+
+/* ═══ TABLE ═══ */
+.tbl{overflow-x:auto;margin:14px 0;border-radius:12px;border:1px solid var(--b1)}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{background:rgba(0,255,204,.04);color:var(--c);font-family:var(--mo);font-size:8.5px;
+  letter-spacing:2px;text-align:left;padding:12px 15px;border-bottom:1px solid var(--b1)}
+td{padding:12px 15px;border-bottom:1px solid rgba(255,255,255,.02);vertical-align:top;color:var(--tx)}
+tr:hover td{background:rgba(0,255,204,.015)}
+tr:last-child td{border-bottom:none}
+td:first-child{font-family:var(--mo);font-size:10.5px;color:var(--c);font-weight:600}
+
+/* ═══ FLOW STEPS ═══ */
+.flow{counter-reset:f;position:relative;padding-left:34px}
+.flow::before{content:'';position:absolute;left:12px;top:14px;width:1px;
+  height:calc(100% - 28px);background:linear-gradient(to bottom,var(--c),transparent)}
+.fs{counter-increment:f;position:relative;margin-bottom:20px;padding-bottom:4px}
+.fs::before{content:counter(f);position:absolute;left:-34px;top:3px;width:25px;height:25px;
+  border-radius:50%;background:var(--c);color:#000;font-family:var(--mo);font-size:10px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 16px rgba(0,255,204,.45)}
+.fs-t{font-family:var(--orb);font-size:12.5px;color:#e0f0ff;margin-bottom:5px;font-weight:600}
+.fs-d{font-size:12px;color:var(--tx2);line-height:1.65}
+
+/* ═══ TIMELINE ═══ */
+.tlw{position:relative;padding-left:32px}
+.tlw::before{content:'';position:absolute;left:10px;top:10px;width:2px;
+  height:calc(100% - 20px);background:linear-gradient(to bottom,var(--c),var(--pu),transparent)}
+.tli{position:relative;margin-bottom:22px}
+.tld{position:absolute;left:-27px;top:5px;width:13px;height:13px;border-radius:50%;
+  border:2px solid var(--c);background:var(--bg);box-shadow:0 0 14px var(--c);
+  animation:dp 3s infinite}
+@keyframes dp{0%,100%{box-shadow:0 0 8px var(--c)}50%{box-shadow:0 0 20px var(--c)}}
+.tlt{font-family:var(--orb);font-size:12.5px;color:#e0f0ff;margin-bottom:5px;font-weight:600}
+.tlb{font-size:12px;color:var(--tx2);line-height:1.65}
+
+/* ═══ SKILL BARS ═══ */
+.skr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.skl{font-family:var(--mo);font-size:10px;color:var(--tx2);width:145px;flex-shrink:0}
+.skt{flex:1;height:7px;background:rgba(255,255,255,.04);border-radius:4px;overflow:hidden}
+.skf{height:100%;border-radius:4px;position:relative}
+.skf::after{content:'';position:absolute;right:0;top:0;bottom:0;width:7px;
+  background:rgba(255,255,255,.6);border-radius:50%;box-shadow:0 0 10px white}
+.skp{font-family:var(--mo);font-size:9px;color:var(--tx2);width:28px;text-align:right}
+
+/* ═══ RESOURCE CARD ═══ */
+.rc{background:var(--card2);border:1px solid var(--b1);border-radius:12px;
+  padding:18px;transition:all .25s;position:relative;overflow:hidden}
+.rc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(0,255,204,.2),transparent)}
+.rc:hover{border-color:var(--b2);box-shadow:0 0 28px rgba(0,255,204,.06);transform:translateY(-2px)}
+.rc-cat{font-family:var(--mo);font-size:8px;color:var(--c);letter-spacing:2px;margin-bottom:7px}
+.rc-name{font-family:var(--orb);font-size:12.5px;color:#e0f0ff;font-weight:600;margin-bottom:6px}
+.rc-desc{font-size:11px;color:var(--tx2);line-height:1.55;margin-bottom:9px}
+.rc-link{font-family:var(--mo);font-size:9px;color:var(--bl);text-decoration:none;
+  display:inline-flex;align-items:center;gap:4px;transition:.2s}
+.rc-link:hover{color:var(--c)}
+.rc-tag{display:inline-block;font-family:var(--mo);font-size:7.5px;padding:2px 7px;
+  border-radius:3px;margin:2px;background:rgba(0,255,204,.07);color:var(--c);
+  border:1px solid rgba(0,255,204,.18)}
+
+/* ═══ DIAGRAM WRAPPER ═══ */
+.dw{background:#000408;border:1px solid var(--b1);border-radius:14px;padding:22px;
+  margin:16px 0;overflow-x:auto;position:relative}
+.dw::before{content:'';position:absolute;inset:0;border-radius:14px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,204,.04),transparent 60%);
+  pointer-events:none}
+.dw svg{min-width:460px}
+
+/* ═══ CALLOUT ═══ */
+.callout{background:linear-gradient(135deg,rgba(0,255,204,.05),rgba(30,144,255,.03));
+  border:1px solid rgba(0,255,204,.18);border-radius:12px;padding:18px 22px;margin:16px 0;
+  position:relative;overflow:hidden}
+.callout::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--c)}
+.co-h{font-family:var(--mo);font-size:9.5px;color:var(--c);letter-spacing:2px;margin-bottom:7px}
+.co-b{font-size:12px;color:var(--tx);line-height:1.65}
+
+/* ═══ DIVIDER ═══ */
+.dv{display:flex;align-items:center;gap:12px;margin:20px 0;
+  font-family:var(--mo);font-size:9px;color:var(--mu);letter-spacing:2px}
+.dv::before,.dv::after{content:'';flex:1;height:1px;background:var(--b1)}
+
+/* ═══ PHASE CARDS ═══ */
+.pc{background:var(--card2);border:1px solid var(--b1);border-radius:12px;padding:20px;
+  text-align:center;transition:all .3s;position:relative;overflow:hidden}
+.pc::after{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,204,.07),transparent 60%);
+  opacity:0;transition:.3s}
+.pc:hover{border-color:var(--c);box-shadow:0 0 30px rgba(0,255,204,.09);transform:translateY(-4px)}
+.pc:hover::after{opacity:1}
+.pc-n{font-family:var(--orb);font-size:38px;font-weight:900;color:var(--c);opacity:.1;line-height:1;margin-bottom:8px}
+.pc-t{font-family:var(--orb);font-size:11px;color:#e0f0ff;font-weight:700;margin-bottom:7px}
+.pc-d{font-size:11px;color:var(--tx2);line-height:1.55}
+
+/* ═══ PROGRESS RINGS ═══ */
+.ring-svg{transform:rotate(-90deg)}
+.ring-c{fill:none;stroke-width:3;stroke-dasharray:201;stroke-dashoffset:201;stroke-linecap:round;
+  transition:stroke-dashoffset 2s cubic-bezier(.4,0,.2,1)}
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--b1);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--b2)}
+
+/* ═══ REVEAL ANIMATIONS ═══ */
+.ai{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}
+.ai.vis{opacity:1;transform:translateY(0)}
+.ai-l{transition-delay:.05s}.ai-ll{transition-delay:.1s}.ai-lll{transition-delay:.15s}
+
+/* ═══ ANIMATED DATA BITS ═══ */
+.bits{position:absolute;inset:0;overflow:hidden;pointer-events:none;border-radius:inherit}
+.bit{position:absolute;font-family:var(--mo);font-size:9px;color:rgba(0,255,204,.15);
+  animation:bitFly 8s linear infinite}
+@keyframes bitFly{from{transform:translateY(100%);opacity:0}10%{opacity:1}90%{opacity:1}to{transform:translateY(-100%);opacity:0}}
+
+/* ═══ NEON GLOW PULSE ═══ */
+@keyframes glow{0%,100%{text-shadow:0 0 10px var(--c)}50%{text-shadow:0 0 30px var(--c),0 0 60px var(--c)}}
+
+/* ═══ HOVER CARD ACCENT LINE ═══ */
+.card-hl{position:absolute;bottom:0;left:0;width:0;height:2px;
+  background:linear-gradient(90deg,var(--c),var(--bl));transition:width .4s ease}
+.card:hover .card-hl{width:100%}
+</style>
+</head>
+<body>
+
+<canvas id="gc"></canvas>
+<div class="sl"></div>
+<div class="vig"></div>
+<div id="cur"></div>
+
+<!-- ─── LOADER ─── -->
+<div id="ldr">
+  <div class="ldr-title">◈ OSINT<span>·</span>DF</div>
+  <div class="ldr-ring">
+    <svg viewBox="0 0 80 80" width="80" height="80">
+      <circle class="ldr-ring-track" cx="40" cy="40" r="34"/>
+      <circle class="ldr-ring-fill" cx="40" cy="40" r="34"/>
+    </svg>
+    <div class="ldr-pct" id="lpct">0%</div>
+  </div>
+  <div class="ldr-log" id="llog">Initializing...</div>
+  <div class="ldr-bar"><div class="ldr-bar-fill"></div></div>
+</div>
+
+<!-- ─── HERO ─── -->
+<header id="hero">
+  <div class="hxbg">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <pattern id="hx1" width="70" height="121" patternUnits="userSpaceOnUse">
+          <polygon points="35,2 68,20 68,101 35,119 2,101 2,20" fill="none" stroke="rgba(0,255,204,.055)" stroke-width=".8"/>
+        </pattern>
+        <pattern id="hx2" width="70" height="121" patternUnits="userSpaceOnUse" x="35" y="60">
+          <polygon points="35,2 68,20 68,101 35,119 2,101 2,20" fill="none" stroke="rgba(30,144,255,.035)" stroke-width=".5"/>
+        </pattern>
+        <radialGradient id="hgr" cx="50%" cy="45%"><stop offset="0%" stop-color="rgba(0,255,204,.07)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#hx1)"/>
+      <rect width="100%" height="100%" fill="url(#hx2)"/>
+      <rect width="100%" height="100%" fill="url(#hgr)"/>
+    </svg>
+  </div>
+  <div class="orbit-wrap">
+    <div class="orbit"><div class="orbit-dot"></div></div>
+    <div class="orbit"><div class="orbit-dot"></div></div>
+    <div class="orbit"><div class="orbit-dot"></div></div>
+  </div>
+  <div class="hero-eyebrow">// ULTIMATE LEARNING PLATFORM v5.0</div>
+  <div class="glitch-wrap" style="position:relative;margin:12px 0 8px">
+    <div class="glitch" data-t="OSINT & FORENSICS">OSINT & FORENSICS</div>
+    <div class="hero-edition">ELITE FIELD MANUAL</div>
+  </div>
+  <div class="hero-desc">CTF WORKFLOWS · TOOL MASTERY · ADVANCED TECHNIQUES · RESOURCES · WRITEUPS · VISUALIZATIONS</div>
+  <div class="hstats">
+    <div class="hs"><div class="hs-n" data-c="18">0</div><div class="hs-l">MODULES</div></div>
+    <div class="hs"><div class="hs-n" data-c="130">0</div><div class="hs-l">COMMANDS</div></div>
+    <div class="hs"><div class="hs-n" data-c="80">0</div><div class="hs-l">TOOLS</div></div>
+    <div class="hs"><div class="hs-n" data-c="60">0</div><div class="hs-l">RESOURCES</div></div>
+  </div>
+  <button class="ebtn" onclick="enterApp()">// ENTER FIELD MANUAL</button>
+  <div class="scrl">▼ &nbsp; SCROLL TO EXPLORE &nbsp; ▼</div>
+</header>
+
+<!-- ─── APP ─── -->
+<div id="app">
+<div class="nav">
+  <div class="nbrand">◈ OSINT·DF</div>
+  <div class="ntabs">
+    <div class="nt active" onclick="show('roadmap',this)"><span class="ndot"></span>ROADMAP</div>
+    <div class="nt" onclick="show('passive',this)"><span class="ndot"></span>PASSIVE RECON</div>
+    <div class="nt" onclick="show('active',this)"><span class="ndot"></span>ACTIVE OSINT</div>
+    <div class="nt" onclick="show('people',this)"><span class="ndot"></span>PEOPLE OSINT</div>
+    <div class="nt" onclick="show('infra',this)"><span class="ndot"></span>INFRA INTEL</div>
+    <div class="nt" onclick="show('df-acq',this)"><span class="ndot"></span>ACQUISITION</div>
+    <div class="nt" onclick="show('df-mem',this)"><span class="ndot"></span>MEMORY</div>
+    <div class="nt" onclick="show('df-win',this)"><span class="ndot"></span>WIN ARTIFACTS</div>
+    <div class="nt" onclick="show('df-net',this)"><span class="ndot"></span>NET FORENSICS</div>
+    <div class="nt" onclick="show('malware',this)"><span class="ndot"></span>MALWARE</div>
+    <div class="nt" onclick="show('ctf',this)"><span class="ndot"></span>CTF GUIDE</div>
+    <div class="nt" onclick="show('toolguide',this)"><span class="ndot"></span>TOOL MASTERY</div>
+    <div class="nt" onclick="show('resources',this)"><span class="ndot"></span>RESOURCES</div>
+    <div class="nt" onclick="show('writeups',this)"><span class="ndot"></span>WRITEUPS</div>
+    <div class="nt" onclick="show('opsec',this)"><span class="ndot"></span>OPSEC</div>
+    <div class="nt" onclick="show('arsenal',this)"><span class="ndot"></span>ARSENAL</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ════ 01 ROADMAP ════ -->
+<div class="sec active" id="roadmap">
+  <div class="sh"><div class="sh-ic">🗺️</div><div>
+    <div class="sh-t">Learning Roadmap & Visualizations</div>
+    <div class="sh-s">// skill progression · discipline map · intelligence cycle · visual mindmaps</div>
+  </div></div>
+
+  <!-- OSINT LEARNING PATH DIAGRAM -->
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--c),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📊 OSINT Learning Path — Interactive Visual Map</div><div class="badge b1">INTERACTIVE</div></div>
+    <div class="dw">
+      <svg viewBox="0 0 820 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <defs>
+          <marker id="a1" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(0,255,204,.65)"/></marker>
+          <filter id="gf"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="rgba(0,255,204,.4)"/><stop offset="100%" stop-color="rgba(30,144,255,.4)"/></linearGradient>
+        </defs>
+        <!-- LEVEL BANDS -->
+        <rect x="0" y="10" width="820" height="70" rx="6" fill="rgba(0,232,122,.03)" stroke="rgba(0,232,122,.08)" stroke-width=".5"/>
+        <rect x="0" y="95" width="820" height="70" rx="6" fill="rgba(255,212,0,.03)" stroke="rgba(255,212,0,.08)" stroke-width=".5"/>
+        <rect x="0" y="180" width="820" height="70" rx="6" fill="rgba(255,26,68,.03)" stroke="rgba(255,26,68,.08)" stroke-width=".5"/>
+        <rect x="0" y="265" width="820" height="70" rx="6" fill="rgba(255,0,102,.03)" stroke="rgba(255,0,102,.08)" stroke-width=".5"/>
+        <!-- LEVEL LABELS -->
+        <text x="8" y="50" fill="rgba(0,232,122,.8)" font-family="Orbitron" font-size="8" letter-spacing="2" font-weight="700">L1 · BEGINNER</text>
+        <text x="8" y="135" fill="rgba(255,212,0,.8)" font-family="Orbitron" font-size="8" letter-spacing="2" font-weight="700">L2 · INTERMEDIATE</text>
+        <text x="8" y="220" fill="rgba(255,26,68,.8)" font-family="Orbitron" font-size="8" letter-spacing="2" font-weight="700">L3 · ADVANCED</text>
+        <text x="8" y="305" fill="rgba(255,0,102,.8)" font-family="Orbitron" font-size="8" letter-spacing="2" font-weight="700">L4 · ELITE</text>
+        <!-- L1 NODES -->
+        <g filter="url(#gf)">
+          <rect x="105" y="22" width="108" height="46" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.6)" stroke-width="1.2"/>
+          <text x="159" y="40" fill="#00e87a" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">Google Dorks</text>
+          <text x="159" y="54" fill="rgba(0,232,122,.55)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">GHDB · Operators</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="228" y="22" width="108" height="46" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.6)" stroke-width="1.2"/>
+          <text x="282" y="40" fill="#00e87a" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">DNS · WHOIS</text>
+          <text x="282" y="54" fill="rgba(0,232,122,.55)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">dig · nslookup · host</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="351" y="22" width="108" height="46" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.6)" stroke-width="1.2"/>
+          <text x="405" y="40" fill="#00e87a" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">theHarvester</text>
+          <text x="405" y="54" fill="rgba(0,232,122,.55)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Email · IP · Names</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="474" y="22" width="108" height="46" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.6)" stroke-width="1.2"/>
+          <text x="528" y="40" fill="#00e87a" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">Sherlock</text>
+          <text x="528" y="54" fill="rgba(0,232,122,.55)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Username · 400+ sites</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="597" y="22" width="108" height="46" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.6)" stroke-width="1.2"/>
+          <text x="651" y="40" fill="#00e87a" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">Exiftool</text>
+          <text x="651" y="54" fill="rgba(0,232,122,.55)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Metadata · GPS</text>
+        </g>
+        <!-- L2 NODES -->
+        <g filter="url(#gf)">
+          <rect x="105" y="107" width="118" height="46" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.55)" stroke-width="1.2"/>
+          <text x="164" y="125" fill="#ffd400" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Subfinder+Amass</text>
+          <text x="164" y="139" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Subdomain Discovery</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="240" y="107" width="118" height="46" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.55)" stroke-width="1.2"/>
+          <text x="299" y="125" fill="#ffd400" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Shodan Basics</text>
+          <text x="299" y="139" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Service Discovery</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="375" y="107" width="118" height="46" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.55)" stroke-width="1.2"/>
+          <text x="434" y="125" fill="#ffd400" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Wayback+gau</text>
+          <text x="434" y="139" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Archive Intel</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="510" y="107" width="118" height="46" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.55)" stroke-width="1.2"/>
+          <text x="569" y="125" fill="#ffd400" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">CT Logs+crt.sh</text>
+          <text x="569" y="139" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Certificate Intel</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="645" y="107" width="118" height="46" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.55)" stroke-width="1.2"/>
+          <text x="704" y="125" fill="#ffd400" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">holehe+h8mail</text>
+          <text x="704" y="139" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Email Breach Intel</text>
+        </g>
+        <!-- L3 NODES -->
+        <g filter="url(#gf)">
+          <rect x="105" y="192" width="125" height="46" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.55)" stroke-width="1.2"/>
+          <text x="167" y="210" fill="#ff1a44" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Shodan Advanced</text>
+          <text x="167" y="224" fill="rgba(255,26,68,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">ASN·Vulns·Favicon</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="248" y="192" width="125" height="46" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.55)" stroke-width="1.2"/>
+          <text x="310" y="210" fill="#ff1a44" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">GitHub Secrets</text>
+          <text x="310" y="224" fill="rgba(255,26,68,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">TruffleHog·Gitleaks</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="391" y="192" width="125" height="46" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.55)" stroke-width="1.2"/>
+          <text x="453" y="210" fill="#ff1a44" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">JS Analysis</text>
+          <text x="453" y="224" fill="rgba(255,26,68,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">jsluice·linkfinder</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="534" y="192" width="125" height="46" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.55)" stroke-width="1.2"/>
+          <text x="596" y="210" fill="#ff1a44" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">CDN Bypass</text>
+          <text x="596" y="224" fill="rgba(255,26,68,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Favicon·Cert·History</text>
+        </g>
+        <!-- L4 NODES -->
+        <g filter="url(#gf)">
+          <rect x="110" y="277" width="140" height="46" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.55)" stroke-width="1.2"/>
+          <text x="180" y="295" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">SpiderFoot+Recon-ng</text>
+          <text x="180" y="309" fill="rgba(255,0,102,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Full Automation</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="268" y="277" width="140" height="46" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.55)" stroke-width="1.2"/>
+          <text x="338" y="295" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Maltego+Pivoting</text>
+          <text x="338" y="309" fill="rgba(255,0,102,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Visual Link Analysis</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="426" y="277" width="140" height="46" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.55)" stroke-width="1.2"/>
+          <text x="496" y="295" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Dark Web OSINT</text>
+          <text x="496" y="309" fill="rgba(255,0,102,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">IntelX·Dehashed</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="584" y="277" width="140" height="46" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.55)" stroke-width="1.2"/>
+          <text x="654" y="295" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Custom Scripts</text>
+          <text x="654" y="309" fill="rgba(255,0,102,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Python·API Chaining</text>
+        </g>
+        <!-- ARROWS L1→L2 -->
+        <line x1="159" y1="68" x2="159" y2="106" stroke="rgba(0,255,204,.3)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="282" y1="68" x2="288" y2="106" stroke="rgba(0,255,204,.3)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="405" y1="68" x2="420" y2="106" stroke="rgba(0,255,204,.3)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="528" y1="68" x2="554" y2="106" stroke="rgba(0,255,204,.3)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="651" y1="68" x2="690" y2="106" stroke="rgba(0,255,204,.3)" stroke-width="1" marker-end="url(#a1)"/>
+        <!-- ARROWS L2→L3 -->
+        <line x1="160" y1="153" x2="160" y2="191" stroke="rgba(0,255,204,.22)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="299" y1="153" x2="302" y2="191" stroke="rgba(0,255,204,.22)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="434" y1="153" x2="447" y2="191" stroke="rgba(0,255,204,.22)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="569" y1="153" x2="582" y2="191" stroke="rgba(0,255,204,.22)" stroke-width="1" marker-end="url(#a1)"/>
+        <!-- ARROWS L3→L4 -->
+        <line x1="165" y1="238" x2="175" y2="276" stroke="rgba(0,255,204,.18)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="308" y1="238" x2="325" y2="276" stroke="rgba(0,255,204,.18)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="452" y1="238" x2="487" y2="276" stroke="rgba(0,255,204,.18)" stroke-width="1" marker-end="url(#a1)"/>
+        <line x1="596" y1="238" x2="638" y2="276" stroke="rgba(0,255,204,.18)" stroke-width="1" marker-end="url(#a1)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- FORENSICS LEARNING PATH -->
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pu),var(--pi))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔬 Forensics Learning Path — Visual Map</div><div class="badge b1">INTERACTIVE</div></div>
+    <div class="dw">
+      <svg viewBox="0 0 820 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <defs>
+          <marker id="a2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(176,0,255,.65)"/></marker>
+        </defs>
+        <!-- BANDS -->
+        <rect x="0" y="10" width="820" height="60" rx="5" fill="rgba(0,232,122,.025)" stroke="rgba(0,232,122,.07)" stroke-width=".5"/>
+        <rect x="0" y="82" width="820" height="60" rx="5" fill="rgba(255,212,0,.025)" stroke="rgba(255,212,0,.07)" stroke-width=".5"/>
+        <rect x="0" y="154" width="820" height="60" rx="5" fill="rgba(255,26,68,.025)" stroke="rgba(255,26,68,.07)" stroke-width=".5"/>
+        <rect x="0" y="226" width="820" height="44" rx="5" fill="rgba(255,0,102,.025)" stroke="rgba(255,0,102,.07)" stroke-width=".5"/>
+        <!-- LABELS -->
+        <text x="8" y="44" fill="rgba(0,232,122,.7)" font-family="Orbitron" font-size="7.5" letter-spacing="2" font-weight="700">FOUNDATION</text>
+        <text x="8" y="116" fill="rgba(255,212,0,.7)" font-family="Orbitron" font-size="7.5" letter-spacing="2" font-weight="700">INTERMEDIATE</text>
+        <text x="8" y="188" fill="rgba(255,26,68,.7)" font-family="Orbitron" font-size="7.5" letter-spacing="2" font-weight="700">ADVANCED</text>
+        <text x="8" y="252" fill="rgba(255,0,102,.7)" font-family="Orbitron" font-size="7.5" letter-spacing="2" font-weight="700">ELITE</text>
+        <!-- L1 -->
+        <g filter="url(#gf)">
+          <rect x="100" y="20" width="108" height="40" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.55)" stroke-width="1"/>
+          <text x="154" y="36" fill="#00e87a" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Log Analysis</text>
+          <text x="154" y="50" fill="rgba(0,232,122,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">grep·awk·Event IDs</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="224" y="20" width="108" height="40" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.55)" stroke-width="1"/>
+          <text x="278" y="36" fill="#00e87a" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">File Carving</text>
+          <text x="278" y="50" fill="rgba(0,232,122,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Foremost·PhotoRec</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="348" y="20" width="108" height="40" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.55)" stroke-width="1"/>
+          <text x="402" y="36" fill="#00e87a" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Disk Imaging</text>
+          <text x="402" y="50" fill="rgba(0,232,122,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">dd·FTK Imager</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="472" y="20" width="108" height="40" rx="5" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.55)" stroke-width="1"/>
+          <text x="526" y="36" fill="#00e87a" font-family="Orbitron" font-size="8" text-anchor="middle" font-weight="700">Autopsy GUI</text>
+          <text x="526" y="50" fill="rgba(0,232,122,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Disk Forensics</text>
+        </g>
+        <!-- L2 -->
+        <g filter="url(#gf)">
+          <rect x="100" y="92" width="118" height="40" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.5)" stroke-width="1"/>
+          <text x="159" y="108" fill="#ffd400" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Win Artifacts</text>
+          <text x="159" y="122" fill="rgba(255,212,0,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Prefetch·LNK·SRUM</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="235" y="92" width="118" height="40" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.5)" stroke-width="1"/>
+          <text x="294" y="108" fill="#ffd400" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">KAPE Triage</text>
+          <text x="294" y="122" fill="rgba(255,212,0,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Fast Collection</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="370" y="92" width="118" height="40" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.5)" stroke-width="1"/>
+          <text x="429" y="108" fill="#ffd400" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Net Forensics</text>
+          <text x="429" y="122" fill="rgba(255,212,0,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Wireshark·tshark</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="505" y="92" width="118" height="40" rx="5" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.5)" stroke-width="1"/>
+          <text x="564" y="108" fill="#ffd400" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Event Log Analysis</text>
+          <text x="564" y="122" fill="rgba(255,212,0,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">EvtxECmd·KAPE</text>
+        </g>
+        <!-- L3 -->
+        <g filter="url(#gf)">
+          <rect x="100" y="162" width="128" height="40" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.5)" stroke-width="1"/>
+          <text x="164" y="178" fill="#ff1a44" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Memory Forensics</text>
+          <text x="164" y="192" fill="rgba(255,26,68,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Volatility3·LiME</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="248" y="162" width="128" height="40" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.5)" stroke-width="1"/>
+          <text x="312" y="178" fill="#ff1a44" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Super Timeline</text>
+          <text x="312" y="192" fill="rgba(255,26,68,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Plaso·log2timeline</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="396" y="162" width="128" height="40" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.5)" stroke-width="1"/>
+          <text x="460" y="178" fill="#ff1a44" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Malware Analysis</text>
+          <text x="460" y="192" fill="rgba(255,26,68,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Static+Dynamic</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="544" y="162" width="128" height="40" rx="5" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.5)" stroke-width="1"/>
+          <text x="608" y="178" fill="#ff1a44" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Zeek NSM</text>
+          <text x="608" y="192" fill="rgba(255,26,68,.45)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Network Monitoring</text>
+        </g>
+        <!-- L4 -->
+        <g filter="url(#gf)">
+          <rect x="140" y="234" width="140" height="30" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.5)" stroke-width="1"/>
+          <text x="210" y="252" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Ghidra · Reverse Engineering</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="300" y="234" width="140" height="30" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.5)" stroke-width="1"/>
+          <text x="370" y="252" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">x64dbg · Debugging</text>
+        </g>
+        <g filter="url(#gf)">
+          <rect x="460" y="234" width="140" height="30" rx="5" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.5)" stroke-width="1"/>
+          <text x="530" y="252" fill="#ff0066" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">Custom Forensics Tools</text>
+        </g>
+        <!-- ARROWS -->
+        <line x1="154" y1="60" x2="154" y2="91" stroke="rgba(176,0,255,.3)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="278" y1="60" x2="280" y2="91" stroke="rgba(176,0,255,.3)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="402" y1="60" x2="415" y2="91" stroke="rgba(176,0,255,.3)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="526" y1="60" x2="550" y2="91" stroke="rgba(176,0,255,.3)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="155" y1="132" x2="158" y2="161" stroke="rgba(176,0,255,.22)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="293" y1="132" x2="305" y2="161" stroke="rgba(176,0,255,.22)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="428" y1="132" x2="450" y2="161" stroke="rgba(176,0,255,.22)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="163" y1="202" x2="200" y2="233" stroke="rgba(176,0,255,.18)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="312" y1="202" x2="355" y2="233" stroke="rgba(176,0,255,.18)" stroke-width="1" marker-end="url(#a2)"/>
+        <line x1="460" y1="202" x2="510" y2="233" stroke="rgba(176,0,255,.18)" stroke-width="1" marker-end="url(#a2)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- INTELLIGENCE CYCLE DIAGRAM -->
+  <div class="card ai ai-ll">
+    <div class="cs" style="background:linear-gradient(90deg,var(--or),var(--ye))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔄 Intelligence Cycle — Animated Diagram</div></div>
+    <div class="dw" style="text-align:center">
+      <svg viewBox="0 0 520 320" xmlns="http://www.w3.org/2000/svg" style="max-width:520px;margin:0 auto;display:block">
+        <defs>
+          <marker id="ac" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(0,255,204,.8)"/></marker>
+          <radialGradient id="cg"><stop offset="0%" stop-color="rgba(0,255,204,.1)"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+        </defs>
+        <!-- CENTER PULSE -->
+        <circle cx="260" cy="160" r="55" fill="url(#cg)" stroke="rgba(0,255,204,.2)" stroke-width="1" stroke-dasharray="5,5"/>
+        <circle cx="260" cy="160" r="38" fill="rgba(0,255,204,.04)" stroke="rgba(0,255,204,.35)" stroke-width="1.5"/>
+        <text x="260" y="155" fill="rgba(0,255,204,.8)" font-family="Orbitron" font-size="10" text-anchor="middle" font-weight="700">INTEL</text>
+        <text x="260" y="170" fill="rgba(0,255,204,.5)" font-family="Orbitron" font-size="10" text-anchor="middle" font-weight="700">CYCLE</text>
+        <!-- NODES -->
+        <circle cx="260" cy="28" r="30" fill="rgba(0,232,122,.1)" stroke="rgba(0,232,122,.65)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="260" y="23" fill="#00e87a" font-family="IBM Plex Mono" font-size="7.5" text-anchor="middle" font-weight="600">PLANNING</text>
+        <text x="260" y="35" fill="rgba(0,232,122,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Define PIRs</text>
+
+        <circle cx="458" cy="108" r="30" fill="rgba(255,212,0,.09)" stroke="rgba(255,212,0,.65)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="458" y="103" fill="#ffd400" font-family="IBM Plex Mono" font-size="7.5" text-anchor="middle" font-weight="600">COLLECTION</text>
+        <text x="458" y="115" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Gather data</text>
+
+        <circle cx="420" cy="248" r="30" fill="rgba(255,112,0,.09)" stroke="rgba(255,112,0,.65)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="420" y="243" fill="#ff7000" font-family="IBM Plex Mono" font-size="7" text-anchor="middle" font-weight="600">PROCESSING</text>
+        <text x="420" y="255" fill="rgba(255,112,0,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Normalize</text>
+
+        <circle cx="100" cy="248" r="30" fill="rgba(255,26,68,.09)" stroke="rgba(255,26,68,.65)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="100" y="243" fill="#ff1a44" font-family="IBM Plex Mono" font-size="7.5" text-anchor="middle" font-weight="600">ANALYSIS</text>
+        <text x="100" y="255" fill="rgba(255,26,68,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Find patterns</text>
+
+        <circle cx="62" cy="108" r="30" fill="rgba(255,0,102,.09)" stroke="rgba(255,0,102,.65)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="62" y="100" fill="#ff0066" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle" font-weight="600">DISSEMINATION</text>
+        <text x="62" y="112" fill="rgba(255,0,102,.5)" font-family="IBM Plex Mono" font-size="6.5" text-anchor="middle">Report·Act</text>
+
+        <!-- ARROWS -->
+        <path d="M 282 44 Q 395 35 440 85" fill="none" stroke="rgba(0,255,204,.4)" stroke-width="1.5" marker-end="url(#ac)"/>
+        <path d="M 472 134 Q 480 190 445 228" fill="none" stroke="rgba(0,255,204,.4)" stroke-width="1.5" marker-end="url(#ac)"/>
+        <path d="M 392 262 Q 280 290 128 264" fill="none" stroke="rgba(0,255,204,.4)" stroke-width="1.5" marker-end="url(#ac)"/>
+        <path d="M 76 222 Q 44 175 44 132" fill="none" stroke="rgba(0,255,204,.4)" stroke-width="1.5" marker-end="url(#ac)"/>
+        <path d="M 68 83 Q 148 38 230 30" fill="none" stroke="rgba(0,255,204,.4)" stroke-width="1.5" marker-end="url(#ac)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- SKILL BARS -->
+  <div class="card ai">
+    <div class="ch"><div class="ct">📈 Skill Progression Tracker</div></div>
+    <div class="g2">
+      <div>
+        <div style="font-family:var(--mo);font-size:9px;color:var(--c);letter-spacing:2px;margin-bottom:14px">// OSINT PATH</div>
+        <div class="skr"><span class="skl">Google Dorking</span><div class="skt"><div class="skf" style="width:100%;background:linear-gradient(90deg,#00e87a,#00ffcc)"></div></div><span class="skp" style="color:var(--gr)">L1</span></div>
+        <div class="skr"><span class="skl">DNS/WHOIS</span><div class="skt"><div class="skf" style="width:100%;background:linear-gradient(90deg,#00e87a,#00ffcc)"></div></div><span class="skp" style="color:var(--gr)">L1</span></div>
+        <div class="skr"><span class="skl">Subfinder+Amass</span><div class="skt"><div class="skf" style="width:82%;background:linear-gradient(90deg,#ffd400,#ff7000)"></div></div><span class="skp" style="color:var(--ye)">L2</span></div>
+        <div class="skr"><span class="skl">Shodan Queries</span><div class="skt"><div class="skf" style="width:78%;background:linear-gradient(90deg,#ffd400,#ff7000)"></div></div><span class="skp" style="color:var(--ye)">L2</span></div>
+        <div class="skr"><span class="skl">GitHub Secrets</span><div class="skt"><div class="skf" style="width:62%;background:linear-gradient(90deg,#ff7000,#ff1a44)"></div></div><span class="skp" style="color:var(--or)">L3</span></div>
+        <div class="skr"><span class="skl">JS Analysis</span><div class="skt"><div class="skf" style="width:55%;background:linear-gradient(90deg,#ff7000,#ff1a44)"></div></div><span class="skp" style="color:var(--or)">L3</span></div>
+        <div class="skr"><span class="skl">CDN Bypass</span><div class="skt"><div class="skf" style="width:48%;background:linear-gradient(90deg,#ff1a44,#ff0066)"></div></div><span class="skp" style="color:var(--re)">L3</span></div>
+        <div class="skr"><span class="skl">Maltego/Recon-ng</span><div class="skt"><div class="skf" style="width:34%;background:linear-gradient(90deg,#ff0066,#b000ff)"></div></div><span class="skp" style="color:var(--pi)">L4</span></div>
+        <div class="skr"><span class="skl">Custom Automation</span><div class="skt"><div class="skf" style="width:18%;background:linear-gradient(90deg,#b000ff,#ff0066)"></div></div><span class="skp" style="color:var(--pu)">L5</span></div>
+      </div>
+      <div>
+        <div style="font-family:var(--mo);font-size:9px;color:var(--bl);letter-spacing:2px;margin-bottom:14px">// FORENSICS PATH</div>
+        <div class="skr"><span class="skl">Log Analysis</span><div class="skt"><div class="skf" style="width:100%;background:linear-gradient(90deg,#00e87a,#00ffcc)"></div></div><span class="skp" style="color:var(--gr)">L1</span></div>
+        <div class="skr"><span class="skl">File Carving</span><div class="skt"><div class="skf" style="width:100%;background:linear-gradient(90deg,#00e87a,#00ffcc)"></div></div><span class="skp" style="color:var(--gr)">L1</span></div>
+        <div class="skr"><span class="skl">Disk Imaging</span><div class="skt"><div class="skf" style="width:86%;background:linear-gradient(90deg,#ffd400,#ff7000)"></div></div><span class="skp" style="color:var(--ye)">L2</span></div>
+        <div class="skr"><span class="skl">Windows Artifacts</span><div class="skt"><div class="skf" style="width:78%;background:linear-gradient(90deg,#ffd400,#ff7000)"></div></div><span class="skp" style="color:var(--ye)">L2</span></div>
+        <div class="skr"><span class="skl">KAPE+Timeline</span><div class="skt"><div class="skf" style="width:70%;background:linear-gradient(90deg,#ffd400,#ff7000)"></div></div><span class="skp" style="color:var(--ye)">L2</span></div>
+        <div class="skr"><span class="skl">Network Forensics</span><div class="skt"><div class="skf" style="width:58%;background:linear-gradient(90deg,#ff7000,#ff1a44)"></div></div><span class="skp" style="color:var(--or)">L3</span></div>
+        <div class="skr"><span class="skl">Memory Forensics</span><div class="skt"><div class="skf" style="width:40%;background:linear-gradient(90deg,#ff1a44,#ff0066)"></div></div><span class="skp" style="color:var(--re)">L4</span></div>
+        <div class="skr"><span class="skl">Malware Analysis</span><div class="skt"><div class="skf" style="width:26%;background:linear-gradient(90deg,#ff0066,#b000ff)"></div></div><span class="skp" style="color:var(--pi)">L4</span></div>
+        <div class="skr"><span class="skl">Reverse Eng.</span><div class="skt"><div class="skf" style="width:12%;background:linear-gradient(90deg,#b000ff,#ff0066)"></div></div><span class="skp" style="color:var(--pu)">L5</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PASSIVE RECON ════ -->
+<div class="sec" id="passive">
+  <div class="sh"><div class="sh-ic">🔍</div><div><div class="sh-t">Passive Recon Techniques</div><div class="sh-s">// google dorking · DNS · certificates · metadata · Wayback — zero target contact</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--gr),var(--c))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">⚡ Google Dorking — Complete Reference</div><div class="bx"><span class="badge b1">BEGINNER</span><span class="badge b2">INT</span></div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">GOOGLE DORK TERMINAL</div></div>
+      <div class="tb">
+<span class="cm"># ── SITE SCOPING ─────────────────────────────────────────────</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com</span>                       <span class="out">→ all indexed pages</span>
+<span class="p">dork$</span> <span class="cmd">site:*.target.com -www</span>                <span class="out">→ subdomains only</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com filetype:pdf|xls|xlsx|sql|bak|env|conf</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com intitle:"Index of /"</span>    <span class="out">→ directory listing</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com inurl:.git</span>              <span class="out">→ exposed git repos</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com "error_log" filetype:txt</span>
+<span class="cm"># ── SECRETS / CREDENTIALS ────────────────────────────────────</span>
+<span class="p">dork$</span> <span class="cmd">site:github.com "target.com" "api_key" OR "secret" OR "password"</span>
+<span class="p">dork$</span> <span class="cmd">site:pastebin.com "target.com"</span>
+<span class="p">dork$</span> <span class="cmd">intext:"DB_PASSWORD" site:target.com filetype:env</span>
+<span class="p">dork$</span> <span class="cmd">"@target.com" "password" filetype:xls</span>
+<span class="p">dork$</span> <span class="cmd">"BEGIN RSA PRIVATE KEY" site:target.com</span>
+<span class="cm"># ── ADMIN PANELS ─────────────────────────────────────────────</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com inurl:admin|login|dashboard|portal|cpanel</span>
+<span class="p">dork$</span> <span class="cmd">site:target.com inurl:wp-admin|wp-config|phpinfo.php</span>
+<span class="cm"># ── CAMERAS / IOT / SCADA ────────────────────────────────────</span>
+<span class="p">dork$</span> <span class="cmd">inurl:"/view/view.shtml"</span>                 <span class="out">→ Axis cameras</span>
+<span class="p">dork$</span> <span class="cmd">intitle:"Live View / - AXIS"</span>
+<span class="p">dork$</span> <span class="cmd">"MongoDB Server Information" port:27017 -authentication</span>
+<span class="ok">[✓] exploit-db.com/google-hacking-database — 7000+ categorized dorks</span>
+      </div>
+    </div>
+    <div class="al a-c"><div>💡</div><div class="al-b"><div class="al-t">AUTOMATION</div><div class="al-x">Use <strong>DorkSearch.com</strong> for instant site-specific dorking. Combine with <code>gf</code> tool: <code>cat urls.txt | gf secrets</code> — auto-classifies URLs by vulnerability type (sqli, ssrf, redirect, etc.).</div></div></div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--bl),var(--pu))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🌐 DNS Intelligence Pipeline</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">DNS RECON WORKFLOW</div></div>
+      <div class="tb">
+<span class="cm"># ── RECORD COLLECTION ────────────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">dig target.com ANY +noall +answer</span>
+<span class="p">$</span> <span class="cmd">dig +short TXT target.com</span>      <span class="out"># SPF/DKIM/DMARC → reveals SaaS stack</span>
+<span class="p">$</span> <span class="cmd">dig +short MX target.com</span>       <span class="out"># Mail providers</span>
+<span class="p">$</span> <span class="cmd">dig AXFR @ns1.target.com target.com</span> <span class="out"># Zone transfer (JACKPOT if open!)</span>
+<span class="cm"># ── SUBDOMAIN ENUMERATION ────────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">subfinder -d target.com -all -silent -o subs.txt</span>
+<span class="p">$</span> <span class="cmd">amass enum -passive -d target.com -o amass.txt</span>
+<span class="p">$</span> <span class="cmd">curl -s "https://crt.sh/?q=%25.target.com&output=json" \
+  | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u >> subs.txt</span>
+<span class="cm"># ── MERGE + RESOLVE + PROBE ──────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">cat subs.txt | sort -u | dnsx -resp -silent | tee resolved.txt</span>
+<span class="p">$</span> <span class="cmd">cat resolved.txt | httpx -status-code -title -tech-detect -silent</span>
+<span class="cm"># ── BULK TXT RECORD HARVEST ──────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">cat resolved.txt | dnsx -txt -silent</span>
+<span class="out"># TXT records reveal: Google, Stripe, Atlassian, Twilio, HubSpot tokens</span>
+<span class="ok">[✓] Each verification token = a SaaS platform in use = new attack surface</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-ll">
+    <div class="cs" style="background:linear-gradient(90deg,var(--ye),var(--or))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📄 Metadata Extraction from Public Files</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">METADATA EXTRACTION</div></div>
+      <div class="tb">
+<span class="cm"># ── DOWNLOAD PUBLIC DOCUMENTS ────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">metagoofil -d target.com -t pdf,doc,docx,xls,xlsx,ppt -l 200 -n 50 -o /docs/</span>
+<span class="cm"># ── BATCH EXTRACT ────────────────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">exiftool -r /docs/ -csv > metadata.csv</span>
+<span class="p">$</span> <span class="cmd">exiftool /docs/*.pdf | grep -E "Author|Creator|Company|Template|Software"</span>
+<span class="p">$</span> <span class="cmd">exiftool -GPSLatitude -GPSLongitude image.jpg</span>  <span class="out"># GPS from photos!</span>
+<span class="warn">
+[PIVOT] Author name → LinkedIn · GitHub · HackerOne → full profile
+[PIVOT] Software version → CVE lookup → known vulnerabilities
+[PIVOT] GPS coords → maps.google.com → physical location
+[PIVOT] Template name → internal naming conventions → internal tools</span>
+      </div>
+    </div>
+    <div class="al a-y"><div>⚠️</div><div class="al-b"><div class="al-t">REAL WORLD CASE — MCAFEE 2012</div><div class="al-x">Journalists photographed John McAfee while he was on the run. His iPhone's EXIF GPS data was not stripped, revealing his exact coordinates in Guatemala and leading to his capture. A single metadata field ended his concealment.</div></div></div>
+  </div>
+</div>
+
+<!-- ════ ACTIVE OSINT ════ -->
+<div class="sec" id="active">
+  <div class="sh"><div class="sh-ic">⚡</div><div><div class="sh-t">Active OSINT & Code Intelligence</div><div class="sh-s">// shodan · censys · github secrets · JS analysis · favicon pivoting · cloud assets</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--re),var(--or))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔭 Shodan — Elite Query Reference</div><div class="badge b3">ADVANCED</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">SHODAN INTELLIGENCE CONSOLE</div></div>
+      <div class="tb">
+<span class="cm"># ── ORG TARGETING ────────────────────────────────────────────</span>
+<span class="p">shodan$</span> <span class="cmd">org:"Target Corp"</span>
+<span class="p">shodan$</span> <span class="cmd">ssl.cert.subject.CN:"*.target.com"</span>    <span class="out"># All wildcard cert servers</span>
+<span class="p">shodan$</span> <span class="cmd">vuln:CVE-2021-44228 org:"Target"</span>      <span class="out"># Log4Shell check</span>
+<span class="p">shodan$</span> <span class="cmd">vuln:CVE-2023-44487 country:"BD"</span>       <span class="out"># HTTP/2 Rapid Reset</span>
+<span class="cm"># ── EXPOSED SERVICES ─────────────────────────────────────────</span>
+<span class="p">shodan$</span> <span class="cmd">port:3389 org:"Target"</span>    <span class="out"># RDP exposed — critical</span>
+<span class="p">shodan$</span> <span class="cmd">port:27017</span>               <span class="out"># MongoDB (often unauthed!)</span>
+<span class="p">shodan$</span> <span class="cmd">port:6379</span>               <span class="out"># Redis (often no auth)</span>
+<span class="p">shodan$</span> <span class="cmd">"MongoDB Server Information" port:27017 -authentication</span>
+<span class="cm"># ── FAVICON HASH PIVOTING (elite technique) ──────────────────</span>
+<span class="p">$</span> <span class="cmd">python3 -c "
+import mmh3,requests,base64,codecs
+r=requests.get('https://target.com/favicon.ico',verify=False)
+print(mmh3.hash(codecs.encode(r.content,'base64')))"</span>
+<span class="p">shodan$</span> <span class="cmd">http.favicon.hash:-123456789</span>   <span class="out"># All servers with this favicon globally</span>
+<span class="cm"># ── CLI WORKFLOW ─────────────────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">shodan search 'org:"Target"' --fields ip_str,port,hostnames,product --limit 500</span>
+<span class="p">$</span> <span class="cmd">shodan download results 'ssl.cert.subject.CN:"*.target.com"'</span>
+<span class="p">$</span> <span class="cmd">shodan parse results.json.gz --fields ip_str,port > ips.txt</span>
+<span class="p">$</span> <span class="cmd">cat ips.txt | httpx -status-code -title -silent</span>
+<span class="p">$</span> <span class="cmd">shodan alert create monitor 'org:"Target Corp"'</span>   <span class="out"># Passive alert on new assets</span>
+<span class="ok">[✓] Censys: parsed.names:"target.com" → superior TLS cert pivoting</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pu),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🐙 GitHub Code Intelligence</div><div class="badge b3">ADVANCED</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">GITHUB SECRET HUNTING</div></div>
+      <div class="tb">
+<span class="cm"># ── SEARCH OPERATORS ─────────────────────────────────────────</span>
+<span class="p">gh$</span> <span class="cmd">org:target-org filename:.env</span>
+<span class="p">gh$</span> <span class="cmd">org:target-org extension:pem</span>                <span class="out"># PRIVATE KEYS!</span>
+<span class="p">gh$</span> <span class="cmd">org:target-org "api_key" OR "access_token"</span>
+<span class="p">gh$</span> <span class="cmd">"target.com" "password" language:python pushed:>2024-01-01</span>
+<span class="cm"># ── TRUFFLEHOG ───────────────────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">trufflehog github --org=target-org --only-verified</span>
+<span class="p">$</span> <span class="cmd">trufflehog git file://./local-repo --json | jq '.SourceMetadata'</span>
+<span class="cm"># ── GITLEAKS ─────────────────────────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">gitleaks detect --source . --report-format json -r report.json</span>
+<span class="cm"># ── DELETED SECRETS IN HISTORY ───────────────────────────────</span>
+<span class="p">$</span> <span class="cmd">git log --all --full-history -- "**/*.env" "**/*.key" "**/*.pem"</span>
+<span class="p">$</span> <span class="cmd">git show COMMIT_HASH:path/to/.env</span>
+<span class="warn">[!] Deleted secrets live in git history even after force-push!</span>
+<span class="ok">[✓] grep.app — search ALL public GitHub repos simultaneously</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PEOPLE OSINT ════ -->
+<div class="sec" id="people">
+  <div class="sh"><div class="sh-ic">👤</div><div><div class="sh-t">People & Social OSINT</div><div class="sh-s">// email intel · username correlation · image geolocation · breach data · social pivoting</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pi),var(--pu))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📧 Email Intelligence Chain</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">EMAIL OSINT PIPELINE</div></div>
+      <div class="tb">
+<span class="p">$</span> <span class="cmd">theHarvester -d target.com -b all -l 500</span>
+<span class="p">$</span> <span class="cmd">holehe email@target.com</span>           <span class="out"># 120+ site registration check</span>
+<span class="p">$</span> <span class="cmd">h8mail -t email@target.com -c h8mail_config.ini -o results.csv</span>
+<span class="p">$</span> <span class="cmd">curl -H "hibp-api-key: KEY" \
+  "https://haveibeenpwned.com/api/v3/breachedaccount/email@target.com"</span>
+<span class="cm"># SMTP VRFY (no email sent — just TCP handshake)</span>
+<span class="p">$</span> <span class="cmd">telnet mail.target.com 25
+EHLO test.com
+MAIL FROM:&lt;x@x.com&gt;
+RCPT TO:&lt;victim@target.com&gt;</span>    <span class="out"># 250 OK=exists | 550=not found</span>
+<span class="cm"># GRAVATAR TRICK</span>
+<span class="p">$</span> <span class="cmd">echo -n "email@target.com" | md5sum</span>
+<span class="p">$</span> <span class="cmd">curl -I "https://gravatar.com/avatar/HASH?d=404"</span>  <span class="out"># 200=profile exists</span>
+<span class="ok">
+PIVOT CHAIN: Email → holehe → username → sherlock → photo → reverse image → identity</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--c),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🗺️ Image OSINT & GEOINT</div><div class="badge b3">ADVANCED</div></div>
+    <div class="g2">
+      <div>
+        <div style="font-family:var(--mo);font-size:9px;color:var(--c);letter-spacing:2px;margin-bottom:10px">// TOOLS</div>
+        <ul class="l">
+          <li><strong>Yandex Images</strong> — Best for facial recognition of public figures</li>
+          <li><strong>PimEyes</strong> — Paid face search across billions of images</li>
+          <li><strong>GeoSpy.ai</strong> — AI predicts location from any photo</li>
+          <li><strong>SunCalc.org</strong> — Shadow analysis: time + hemisphere + latitude</li>
+          <li><strong>Google Street View</strong> — Verify and explore identified locations</li>
+          <li><strong>Bellingcat Geolocation Guide</strong> — Industry standard reference</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-family:var(--mo);font-size:9px;color:var(--c);letter-spacing:2px;margin-bottom:10px">// VISUAL ANALYSIS CLUES</div>
+        <ul class="l">
+          <li><strong>Architecture style</strong> → country/region identification</li>
+          <li><strong>Vegetation type</strong> → climate zone, hemisphere</li>
+          <li><strong>Vehicle plates</strong> → country + specific region</li>
+          <li><strong>Street sign fonts</strong> → country-specific standards</li>
+          <li><strong>Sun direction+shadow</strong> → hemisphere + approximate time</li>
+          <li><strong>Power pole styles</strong> → country infrastructure standards</li>
+          <li><strong>Road markings</strong> → driving side (left/right)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ INFRA ════ -->
+<div class="sec" id="infra">
+  <div class="sh"><div class="sh-ic">🌐</div><div><div class="sh-t">Infrastructure Intelligence</div><div class="sh-s">// ASN mapping · cloud discovery · CDN bypass · IP enumeration · cloud assets</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--bl),var(--c))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🏢 ASN Enumeration + CDN Bypass</div><div class="badge b4">ELITE</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">INFRA RECON</div></div>
+      <div class="tb">
+<span class="p">$</span> <span class="cmd">curl -s "https://api.bgpview.io/search?query_term=Target+Corp" | jq '.data.asns[]'</span>
+<span class="p">$</span> <span class="cmd">amass intel -org "Target Corp"</span>                  <span class="out"># ASN + IP ranges</span>
+<span class="p">$</span> <span class="cmd">curl -s "https://api.bgpview.io/asn/AS12345/prefixes" \
+  | jq -r '.data.ipv4_prefixes[].prefix'</span>
+<span class="cm"># CDN BYPASS TECHNIQUES</span>
+<span class="out">1. Historical DNS: securitytrails.com → IP before CDN = origin range</span>
+<span class="out">2. Non-CDN subdomains: mail.target.com, vpn.target.com (often bypass CDN)</span>
+<span class="out">3. Favicon hash → Shodan http.favicon.hash:HASH (find all global servers)</span>
+<span class="out">4. SSL cert scan: python3 cloudflair.py target.com</span>
+<span class="out">5. MX record pivot: dig MX target.com → same /24 as origin</span>
+<span class="cm"># CLOUD ASSET DISCOVERY</span>
+<span class="p">$</span> <span class="cmd">s3scanner scan --buckets-file permutations.txt</span>
+<span class="p">$</span> <span class="cmd">aws s3 ls s3://target-company --no-sign-request</span>
+<span class="p">$</span> <span class="cmd">python3 cloud_enum.py -k target -m azure,gcp,aws</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ ACQUISITION ════ -->
+<div class="sec" id="df-acq">
+  <div class="sh"><div class="sh-ic">💾</div><div><div class="sh-t">Evidence Acquisition</div><div class="sh-s">// order of volatility · forensic imaging · chain of custody · write-blockers · hashing</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--ye),var(--or))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">⚡ Order of Volatility — Critical Reference</div><div class="badge b1">CRITICAL</div></div>
+    <div class="tbl"><table>
+      <tr><th>#</th><th>Data Type</th><th>Volatility</th><th>Collection Method</th></tr>
+      <tr><td>1</td><td>CPU registers, cache</td><td>Lost immediately</td><td>Specialized hardware</td></tr>
+      <tr><td>2</td><td>RAM / Physical Memory</td><td>Lost on power-off</td><td>WinPmem, LiME, FTK Imager</td></tr>
+      <tr><td>3</td><td>Network connections</td><td>Changes rapidly</td><td>netstat, ss, Wireshark live</td></tr>
+      <tr><td>4</td><td>Running processes</td><td>Changes rapidly</td><td>ps, tasklist, lsof, handle.exe</td></tr>
+      <tr><td>5</td><td>Disk / Storage</td><td>Persistent</td><td>dd, dcfldd, ewfacquire</td></tr>
+      <tr><td>6</td><td>System logs</td><td>Semi-persistent</td><td>KAPE, file copy</td></tr>
+      <tr><td>7</td><td>Backups / Archives</td><td>Persistent</td><td>As-is with hash</td></tr>
+    </table></div>
+    <div class="al a-r"><div>🛑</div><div class="al-b"><div class="al-t">IRON LAW — NEVER VIOLATE</div><div class="al-x"><strong>Never work on original evidence. Never boot the suspect machine from its own OS.</strong> Always use a hardware write-blocker before connecting any evidence drive. One accidental write = case destroyed.</div></div></div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--gr),var(--ye))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">💿 Forensic Imaging Workflow</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">FORENSIC IMAGING</div></div>
+      <div class="tb">
+<span class="p">$</span> <span class="cmd">lsblk -f && fdisk -l</span>                  <span class="out"># Step 1: identify drive</span>
+<span class="p">$</span> <span class="cmd">sha256sum /dev/sdb | tee original.sha256</span>  <span class="out"># Step 2: hash original</span>
+<span class="p">$</span> <span class="cmd">dcfldd if=/dev/sdb of=/evidence/disk.img \
+  hashwindow=512M md5log=h.md5 sha256log=h.sha256 bs=4096</span> <span class="out"># Step 3: image</span>
+<span class="p">$</span> <span class="cmd">ewfacquire -t /evidence/disk -C "Case2024" \
+  -e "Investigator" -f encase6 /dev/sdb</span>                 <span class="out"># E01 format</span>
+<span class="p">$</span> <span class="cmd">sha256sum /evidence/disk.img | diff - original.sha256</span>    <span class="out"># Step 4: verify</span>
+<span class="p">$</span> <span class="cmd">mount -o ro,noatime,loop /evidence/disk.img /mnt/evidence</span> <span class="out"># Step 5: mount RO</span>
+<span class="ok">[✓] Hashes match → integrity proven → safe to analyze</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MEMORY ════ -->
+<div class="sec" id="df-mem">
+  <div class="sh"><div class="sh-ic">🧠</div><div><div class="sh-t">Memory Forensics — Volatility3</div><div class="sh-s">// RAM acquisition · process analysis · malware detection · credential extraction · rootkit hunting</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pi),var(--pu))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🧩 Volatility3 — Complete Command Arsenal</div><div class="badge b4">ELITE</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">VOLATILITY 3 — WINDOWS ANALYSIS</div></div>
+      <div class="tb">
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.info</span>           <span class="out"># System info + OS version</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.pslist</span>         <span class="out"># Normal process list</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.pstree</span>         <span class="out"># Parent-child tree (spot anomalies)</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.psscan</span>         <span class="out"># Raw scan → finds hidden processes!</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.cmdline</span>        <span class="out"># Full command lines per process</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.malfind</span>        <span class="out"># Injected shellcode detection!</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.netstat</span>        <span class="out"># Active connections at dump time</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.hashdump</span>       <span class="out"># SAM NTLM hashes</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.lsadump</span>        <span class="out"># LSA secrets</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.dmp windows.dumpfiles --pid SUSPICIOUS_PID --dump-dir /out/</span>
+<span class="cm"># ELITE: FIND HIDDEN/ROOTKITTED PROCESSES</span>
+<span class="p">$</span> <span class="cmd">diff \
+  &lt;(vol3 -f ram.dmp windows.pslist 2>/dev/null | awk '{print $2}' | sort) \
+  &lt;(vol3 -f ram.dmp windows.psscan 2>/dev/null | awk '{print $2}' | sort)</span>
+<span class="warn">[!] In psscan but NOT pslist = hidden/rootkitted process!</span>
+<span class="cm"># LINUX MEMORY</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.lime linux.pslist</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.lime linux.bash</span>            <span class="out"># Bash history from RAM</span>
+<span class="p">$</span> <span class="cmd">vol3 -f ram.lime linux.check_modules</span>   <span class="out"># Hidden kernel modules</span>
+<span class="ok">[✓] malfind MZ header (4D 5A) = PE injection → dump + analyze with peframe</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ WINDOWS ════ -->
+<div class="sec" id="df-win">
+  <div class="sh"><div class="sh-ic">🪟</div><div><div class="sh-t">Windows Forensic Artifacts</div><div class="sh-s">// MFT · prefetch · registry · event logs · shellbags · LNK · SRUM · USN · amcache</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--bl),var(--pu))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🗂️ Artifact Locations + Critical Event IDs</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="tbl"><table>
+      <tr><th>Artifact</th><th>Location</th><th>Reveals</th></tr>
+      <tr><td>$MFT</td><td>C:\$MFT</td><td>Every file ever, all timestamps, metadata</td></tr>
+      <tr><td>Prefetch</td><td>C:\Windows\Prefetch\*.pf</td><td>Programs executed, run count, last 8 timestamps</td></tr>
+      <tr><td>Amcache</td><td>C:\Windows\AppCompat\Programs\Amcache.hve</td><td>SHA1 of executed programs</td></tr>
+      <tr><td>SRUM</td><td>C:\Windows\System32\sru\SRUDB.dat</td><td>Per-app network/CPU/memory usage history</td></tr>
+      <tr><td>Shellbags</td><td>USRCLASS.DAT</td><td>Folders browsed via Explorer, even if deleted</td></tr>
+      <tr><td>LNK Files</td><td>C:\Users\*\AppData\...\Recent\</td><td>Recently opened files, source path, volume serial</td></tr>
+      <tr><td>USN Journal</td><td>C:\$Extend\$UsnJrnl:$J</td><td>Chronological file system change log</td></tr>
+      <tr><td>Jump Lists</td><td>...\Recent\AutomaticDestinations\</td><td>Per-application recently opened files</td></tr>
+    </table></div>
+    <div class="dv">CRITICAL WINDOWS EVENT IDS</div>
+    <div class="tbl"><table>
+      <tr><th>Event ID</th><th>Meaning</th><th>Why It Matters</th></tr>
+      <tr><td>4624</td><td>Successful logon</td><td>Lateral movement — check Type 3=network, 10=remote</td></tr>
+      <tr><td>4648</td><td>Explicit credential use</td><td>Pass-the-Hash / runas / lateral movement</td></tr>
+      <tr><td>4688</td><td>Process created</td><td>Full command line — attacker tool execution</td></tr>
+      <tr><td>4698</td><td>Scheduled task created</td><td>Most common persistence mechanism</td></tr>
+      <tr><td>7045</td><td>New service installed</td><td>Malware persistence via Windows service</td></tr>
+      <tr><td>1102</td><td>Audit log cleared</td><td>Attacker covering tracks — CRITICAL ALERT</td></tr>
+      <tr><td>4104</td><td>PS script block logged</td><td>Obfuscated PowerShell commands decoded</td></tr>
+      <tr><td>Sysmon 1</td><td>Process Create</td><td>Full cmdline + parent + hash + user</td></tr>
+      <tr><td>Sysmon 3</td><td>Network connection</td><td>Process → IP/port mapping for C2 detection</td></tr>
+      <tr><td>Sysmon 11</td><td>File created</td><td>Malware dropping payloads to disk</td></tr>
+    </table></div>
+  </div>
+</div>
+
+<!-- ════ NETWORK ════ -->
+<div class="sec" id="df-net">
+  <div class="sh"><div class="sh-ic">📶</div><div><div class="sh-t">Network Forensics</div><div class="sh-s">// Wireshark · tshark · Zeek · C2 detection · DNS tunneling · traffic reconstruction</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--c),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🦈 Wireshark + tshark + Zeek</div><div class="badge b3">ADVANCED</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">NETWORK FORENSICS TOOLKIT</div></div>
+      <div class="tb">
+<span class="cm"># WIRESHARK FILTERS</span>
+<span class="cmd">tcp.time_delta > 60 && tcp.flags == 0x018</span>     <span class="out"># C2 beaconing</span>
+<span class="cmd">dns.qry.name.len > 40</span>                          <span class="out"># DNS tunneling</span>
+<span class="cmd">!(http.user_agent)</span>                             <span class="out"># No UA = malware</span>
+<span class="cmd">http.request.method == "POST"</span>                  <span class="out"># Data exfiltration</span>
+<span class="cmd">http.authbasic</span>                                 <span class="out"># Cleartext credentials!</span>
+<span class="cm"># TSHARK CLI</span>
+<span class="p">$</span> <span class="cmd">tshark -r cap.pcap -Y dns -T fields -e dns.qry.name | sort | uniq -c | sort -rn</span>
+<span class="p">$</span> <span class="cmd">tshark -r cap.pcap -Y http -T fields -e http.host | sort -u</span>
+<span class="p">$</span> <span class="cmd">tshark -r cap.pcap --export-objects http,/output/</span>  <span class="out"># Extract files</span>
+<span class="p">$</span> <span class="cmd">tshark -r cap.pcap -q -z conv,tcp | head -20</span>       <span class="out"># Conversation stats</span>
+<span class="cm"># ZEEK</span>
+<span class="p">$</span> <span class="cmd">zeek -r capture.pcap</span>
+<span class="out">→ conn.log: all connections + duration + bytes
+→ dns.log:  all DNS queries and answers
+→ http.log: method, host, URI, user-agent, status
+→ ssl.log:  TLS version, cipher, cert validation
+→ files.log: file transfers with hashes
+→ weird.log: protocol anomalies (attacker tools!)</span>
+<span class="p">$</span> <span class="cmd">cat conn.log | zeek-cut id.orig_h id.resp_h id.resp_p duration orig_bytes \
+  | sort -k5 -rn | head -10</span>                    <span class="out"># Top bandwidth</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MALWARE ════ -->
+<div class="sec" id="malware">
+  <div class="sh"><div class="sh-ic">☣️</div><div><div class="sh-t">Malware Forensics & Analysis</div><div class="sh-s">// static analysis · dynamic analysis · YARA · sandbox · behavioral · IDA/Ghidra</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--re),var(--or))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔬 Static + Dynamic Analysis Pipeline</div><div class="badge b3">ADVANCED</div></div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">MALWARE ANALYSIS WORKFLOW</div></div>
+      <div class="tb">
+<span class="cm"># STATIC ANALYSIS</span>
+<span class="p">$</span> <span class="cmd">sha256sum malware.exe && die malware.exe</span>   <span class="out"># Hash + packer detection</span>
+<span class="p">$</span> <span class="cmd">floss malware.exe</span>                          <span class="out"># Deobfuscate encoded strings</span>
+<span class="p">$</span> <span class="cmd">strings -a malware.exe | grep -Ei "(http|cmd|powershell|inject|shellcode)"</span>
+<span class="p">$</span> <span class="cmd">peframe malware.exe</span>                        <span class="out"># PE header analysis</span>
+<span class="p">$</span> <span class="cmd">yara -r /opt/rules/ malware.exe</span>
+<span class="cm"># DYNAMIC ANALYSIS (isolated VM — MANDATORY)</span>
+<span class="out">1. Snapshot clean VM (VMware/VBox)</span>
+<span class="out">2. Start: Procmon + Wireshark + Autoruns + Regshot /1st + INetSim</span>
+<span class="out">3. Execute malware, wait 3-5 min</span>
+<span class="out">4. Regshot /2nd → diff = all registry changes</span>
+<span class="out">5. Check Procmon: CreateFile, RegSetValue, TCP Connect</span>
+<span class="p">$</span> <span class="cmd">hollows_hunter.exe /loop /report report</span>   <span class="out"># Detect process injection</span>
+<span class="cm"># SUSPICIOUS IMPORTS TO FLAG</span>
+<span class="warn">VirtualAlloc + WriteProcessMemory + CreateRemoteThread = injection triad
+NtUnmapViewOfSection = process hollowing
+RegSetValue + Run key = persistence
+WinExec / ShellExecute + URL = dropper</span>
+<span class="ok">[✓] Automated: any.run · hybrid-analysis.com · tria.ge · cape-sandbox</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ CTF GUIDE ════ -->
+<div class="sec" id="ctf">
+  <div class="sh"><div class="sh-ic">🏁</div><div><div class="sh-t">CTF Complete Guide</div><div class="sh-s">// categories · step-by-step methodology · workflow · weekly schedule · practice tips</div></div></div>
+
+  <!-- CTF CATEGORY MINDMAP -->
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--ye),var(--gr))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🗺️ CTF Categories — Visual Map</div></div>
+    <div class="dw">
+      <svg viewBox="0 0 720 340" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">
+        <defs>
+          <marker id="am" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto"><polygon points="0 0,7 2.5,0 5" fill="rgba(0,255,204,.55)"/></marker>
+        </defs>
+        <!-- CENTER -->
+        <circle cx="360" cy="170" r="48" fill="rgba(0,255,204,.07)" stroke="rgba(0,255,204,.45)" stroke-width="2" filter="url(#gf)"/>
+        <circle cx="360" cy="170" r="34" fill="rgba(0,255,204,.04)" stroke="rgba(0,255,204,.25)" stroke-width="1" stroke-dasharray="4,4"/>
+        <text x="360" y="165" fill="rgba(0,255,204,.85)" font-family="Orbitron" font-size="12" text-anchor="middle" font-weight="700">CTF</text>
+        <text x="360" y="180" fill="rgba(0,255,204,.5)" font-family="Orbitron" font-size="9" text-anchor="middle">CATEGORIES</text>
+        <!-- NODES -->
+        <circle cx="180" cy="55" r="38" fill="rgba(0,232,122,.09)" stroke="rgba(0,232,122,.6)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="180" y="50" fill="#00e87a" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">OSINT</text>
+        <text x="180" y="63" fill="rgba(0,232,122,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Recon · Geo · Social</text>
+        <line x1="211" y1="80" x2="325" y2="138" stroke="rgba(0,255,204,.28)" stroke-width="1.2" marker-end="url(#am)"/>
+
+        <circle cx="540" cy="55" r="38" fill="rgba(30,144,255,.09)" stroke="rgba(30,144,255,.6)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="540" y="50" fill="#1e90ff" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">FORENSICS</text>
+        <text x="540" y="63" fill="rgba(30,144,255,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Disk · Memory · Logs</text>
+        <line x1="509" y1="80" x2="395" y2="138" stroke="rgba(0,255,204,.28)" stroke-width="1.2" marker-end="url(#am)"/>
+
+        <circle cx="80" cy="190" r="38" fill="rgba(0,255,204,.07)" stroke="rgba(0,255,204,.55)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="80" y="185" fill="var(--c)" font-family="Orbitron" font-size="7.5" text-anchor="middle" font-weight="700">NETWORK</text>
+        <text x="80" y="198" fill="rgba(0,255,204,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">PCAP · Traffic</text>
+        <line x1="117" y1="175" x2="315" y2="168" stroke="rgba(0,255,204,.28)" stroke-width="1.2" marker-end="url(#am)"/>
+
+        <circle cx="640" cy="190" r="38" fill="rgba(255,212,0,.08)" stroke="rgba(255,212,0,.55)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="640" y="185" fill="#ffd400" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">CRYPTO</text>
+        <text x="640" y="198" fill="rgba(255,212,0,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Ciphers · Hashing</text>
+        <line x1="603" y1="175" x2="405" y2="168" stroke="rgba(0,255,204,.28)" stroke-width="1.2" marker-end="url(#am)"/>
+
+        <circle cx="180" cy="310" r="38" fill="rgba(176,0,255,.08)" stroke="rgba(176,0,255,.55)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="180" y="305" fill="#b000ff" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">STEGO</text>
+        <text x="180" y="318" fill="rgba(176,0,255,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">Images · Audio · LSB</text>
+        <line x1="210" y1="285" x2="328" y2="202" stroke="rgba(0,255,204,.28)" stroke-width="1.2" marker-end="url(#am)"/>
+
+        <circle cx="540" cy="310" r="38" fill="rgba(255,26,68,.08)" stroke="rgba(255,26,68,.55)" stroke-width="1.5" filter="url(#gf)"/>
+        <text x="540" y="305" fill="#ff1a44" font-family="Orbitron" font-size="8.5" text-anchor="middle" font-weight="700">MALWARE</text>
+        <text x="540" y="318" fill="rgba(255,26,68,.5)" font-family="IBM Plex Mono" font-size="7" text-anchor="middle">RE · Behavioral</text>
+        <line x1="508" y1="285" x2="392" y2="202" stroke="rgba(0,255,204,.28)" stroke-width="1.2" marker-end="url(#am)"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- OSINT CTF METHODOLOGY -->
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--gr),var(--c))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔍 OSINT CTF — Step by Step Methodology</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="flow">
+      <div class="fs">
+        <div class="fs-t">Analyze every pixel of provided media — zero assumptions</div>
+        <div class="fs-d">Images: read all text, signs, vehicle plates, architecture. Extract EXIF immediately: <code>exiftool image.jpg</code>. Check GPS, software, author. Look for hidden data. Never skip this step.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Reverse image search all visual elements aggressively</div>
+        <div class="fs-d">Google Images → TinEye → Yandex (best for faces) → Bing. <strong>Crop individual elements</strong> — a distinctive sign, building facade, or logo often leads directly to exact location. Try both full image and crops.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Hunt usernames across all platforms systematically</div>
+        <div class="fs-d">Run: <code>sherlock username</code> and <code>maigret username --html</code>. Cross-reference: same username on LinkedIn + Reddit + GitHub = full profile reconstruction. Read all post history and bio carefully.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Check Wayback Machine and archives for deleted content</div>
+        <div class="fs-d"><code>echo target.com | waybackurls</code> — old profiles and deleted posts survive for years. Google cache may have very recent content not yet archived. Check all snapshots, not just the most recent.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">DNS and certificate intelligence for domain targets</div>
+        <div class="fs-d"><code>subfinder -d domain.com -all</code> + <code>crt.sh</code> lookup. Staging subdomains, old dev environments, and admin panels often contain the flag or next pivot point that production hides.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Breach data and social correlation for person targets</div>
+        <div class="fs-d">Check <code>holehe email@domain.com</code> for platform presence. Search IntelX/Dehashed for leaked data. Correlate accounts across platforms to build full identity profile.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Pivot aggressively — document every finding with timestamp</div>
+        <div class="fs-d">Every data point leads to three more. Build a visual map in Maltego or even on paper. Revisit dead ends after each new discovery — context changes what was previously meaningless data.</div>
+      </div>
+    </div>
+    <div class="term" style="margin-top:14px">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">OSINT CTF TOOLS REFERENCE</div></div>
+      <div class="tb">
+<span class="cm"># GEOLOCATION</span>
+<span class="p">$</span> <span class="cmd">exiftool -GPSLatitude -GPSLongitude photo.jpg</span>
+<span class="out"># geospy.ai → AI location from any photo</span>
+<span class="out"># SunCalc.org → shadow analysis (time + hemisphere)</span>
+<span class="out"># Bellingcat Geolocation Guide → standard methodology</span>
+<span class="cm"># METADATA</span>
+<span class="p">$</span> <span class="cmd">exiftool -All document.pdf | grep -E "Author|Creator|Template"</span>
+<span class="out"># Author → LinkedIn → profile → employer → colleagues</span>
+<span class="cm"># ACCOUNT VERIFICATION</span>
+<span class="p">$</span> <span class="cmd">echo -n "email@domain.com" | md5sum</span>
+<span class="p">$</span> <span class="cmd">curl -I "https://gravatar.com/avatar/HASH?d=404"</span>
+<span class="ok">[✓] tracelabs.org — real OSINT CTFs for law enforcement missing persons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORENSICS CTF WORKFLOW -->
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--bl),var(--pu))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔬 Forensics CTF — Complete Workflow</div><div class="badge b2">INTERMEDIATE</div></div>
+    <div class="flow">
+      <div class="fs">
+        <div class="fs-t">Identify file type — never trust the extension</div>
+        <div class="fs-d"><code>file unknown_file</code> → <code>xxd unknown_file | head -4</code> for magic bytes. Extensions lie; headers don't. Common CTF trick: image with wrong extension, corrupted header, or data appended after EOF.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Extract embedded data from all containers</div>
+        <div class="fs-d"><code>binwalk -e file</code> finds embedded archives and files. <code>foremost file -o out/</code> carves by file signatures. <code>strings file | grep -i "flag{"</code> for instant wins. Try <code>7z x file</code> on anything.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Steganography analysis — methodical approach</div>
+        <div class="fs-d"><code>steghide info image.jpg</code> then extract. For PNG: <code>zsteg image.png</code> checks all LSB planes. <code>stegsolve</code> for visual bit-plane analysis. Try common passwords: "", "password", "1234", challenge name.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">PCAP analysis — layer by layer</div>
+        <div class="fs-d">File → Export Objects → HTTP to reconstruct files. Follow each TCP stream (Ctrl+Alt+Shift+T). Filter <code>http.request.method == "POST"</code>. Decode base64 from traffic. Check all protocols for cleartext credentials.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Memory dump analysis — structured investigation</div>
+        <div class="fs-d"><code>vol3 -f dump.dmp windows.info</code> first. Then pslist → cmdline → netscan → clipboard. Flags are often in process memory, clipboard data, or environment variables. Dump suspicious processes.</div>
+      </div>
+      <div class="fs">
+        <div class="fs-t">Disk image analysis — use Autopsy systematically</div>
+        <div class="fs-d">Open in Autopsy → run all ingest modules. Check: Deleted Files, Documents, Browser History, Registry. <code>strings disk.img | grep -i "flag{"</code> for quick wins. Look for files with unusual timestamps.</div>
+      </div>
+    </div>
+    <div class="al a-c"><div>💡</div><div class="al-b"><div class="al-t">MAGIC BYTES CHEATSHEET</div><div class="al-x">
+      <code>FF D8 FF</code> = JPEG &nbsp;·&nbsp; <code>89 50 4E 47</code> = PNG &nbsp;·&nbsp; <code>50 4B 03 04</code> = ZIP/DOCX/JAR &nbsp;·&nbsp;
+      <code>4D 5A</code> = Windows PE (MZ) &nbsp;·&nbsp; <code>7F 45 4C 46</code> = Linux ELF &nbsp;·&nbsp; <code>25 50 44 46</code> = PDF &nbsp;·&nbsp;
+      <code>1F 8B</code> = GZIP &nbsp;·&nbsp; <code>52 61 72 21</code> = RAR &nbsp;·&nbsp; <code>47 49 46 38</code> = GIF
+    </div></div></div>
+  </div>
+
+  <!-- WEEKLY SCHEDULE -->
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--or),var(--ye))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📅 Weekly Practice Schedule — Structured Path</div><div class="badge b1">BEGINNER</div></div>
+    <div class="tbl"><table>
+      <tr><th>Day</th><th>Focus Area</th><th>Platform</th><th>Duration</th><th>Goal</th></tr>
+      <tr><td>Monday</td><td>OSINT — username/image recon</td><td>TryHackMe / TraceLabs</td><td>1-2 hrs</td><td>Complete 1 OSINT challenge</td></tr>
+      <tr><td>Tuesday</td><td>Log analysis + Event IDs</td><td>CyberDefenders BlueYard</td><td>1-2 hrs</td><td>Analyze 1 log-based incident</td></tr>
+      <tr><td>Wednesday</td><td>Network forensics — PCAP</td><td>malware-traffic-analysis.net</td><td>2 hrs</td><td>Analyze 1 malware PCAP</td></tr>
+      <tr><td>Thursday</td><td>Memory forensics — Volatility</td><td>CyberDefenders / HTB Sherlocks</td><td>2 hrs</td><td>Complete 1 memory challenge</td></tr>
+      <tr><td>Friday</td><td>Disk forensics + Win artifacts</td><td>DFIR.training challenges</td><td>2 hrs</td><td>Complete 1 disk image challenge</td></tr>
+      <tr><td>Saturday</td><td>Full CTF or IR lab</td><td>HTB Sherlocks / blueteamlabs</td><td>4+ hrs</td><td>Complete a full scenario</td></tr>
+      <tr><td>Sunday</td><td>Writeups + tool practice</td><td>Medium / GitHub / docs</td><td>1-2 hrs</td><td>Write up what you learned</td></tr>
+    </table></div>
+    <div class="al a-y"><div>⭐</div><div class="al-b"><div class="al-t">BEGINNER 4-WEEK STARTING PLAN</div><div class="al-x">
+      <strong>Week 1:</strong> TryHackMe "OhSINT" + "Sakura Room" → learn basic OSINT methodology<br>
+      <strong>Week 2:</strong> CyberDefenders "Wireshark" challenge → network forensics basics<br>
+      <strong>Week 3:</strong> HTB Sherlocks "Brutus" → Windows event log investigation<br>
+      <strong>Week 4:</strong> CyberDefenders "Hammered" → full disk+memory incident response<br>
+      Each completes in 1-3 hours. Progress is fast when you follow this order.
+    </div></div></div>
+  </div>
+
+  <!-- CTF PLATFORMS -->
+  <div class="card ai">
+    <div class="ch"><div class="ct">🏆 CTF Practice Platforms — Complete Rated Guide</div></div>
+    <div class="g3">
+      <div class="tool">
+        <div class="tn">CyberDefenders</div>
+        <div class="td">Best platform for OSINT + Forensics. Real artifacts, realistic IR scenarios, guided challenges.</div>
+        <a class="tlink" href="https://cyberdefenders.org" target="_blank">→ cyberdefenders.org</a>
+        <div class="tc">Free + Paid | All levels</div>
+      </div>
+      <div class="tool">
+        <div class="tn">HTB Sherlocks</div>
+        <div class="td">Professional forensic cases. "Brutus" → "Campfire" → "Unit42" are ideal progression.</div>
+        <a class="tlink" href="https://app.hackthebox.com/sherlocks" target="_blank">→ hackthebox.com</a>
+        <div class="tc">Paid | Intermediate+</div>
+      </div>
+      <div class="tool">
+        <div class="tn">TryHackMe</div>
+        <div class="td">Best beginner platform. "OhSINT" and "Sakura Room" are perfect OSINT starters.</div>
+        <a class="tlink" href="https://tryhackme.com" target="_blank">→ tryhackme.com</a>
+        <div class="tc">Free + Paid | Beginner</div>
+      </div>
+      <div class="tool">
+        <div class="tn">BlueteamLabs</div>
+        <div class="td">Incident response, log analysis, and network forensics challenges with real artifacts.</div>
+        <a class="tlink" href="https://blueteamlabs.online" target="_blank">→ blueteamlabs.online</a>
+        <div class="tc">Free | Intermediate</div>
+      </div>
+      <div class="tool">
+        <div class="tn">TraceLabs</div>
+        <div class="td">Real OSINT CTFs — find missing persons intel for law enforcement agencies. Best real-world practice.</div>
+        <a class="tlink" href="https://www.tracelabs.org" target="_blank">→ tracelabs.org</a>
+        <div class="tc">Free | All levels</div>
+      </div>
+      <div class="tool">
+        <div class="tn">DFIR.training</div>
+        <div class="td">Free forensic image challenges, tool database, and community resources maintained by practitioners.</div>
+        <a class="tlink" href="https://www.dfir.training" target="_blank">→ dfir.training</a>
+        <div class="tc">Free | All levels</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ TOOL MASTERY ════ -->
+<div class="sec" id="toolguide">
+  <div class="sh"><div class="sh-ic">🛠️</div><div><div class="sh-t">Tool Mastery — How to Use Them</div><div class="sh-s">// installation · configuration · advanced usage · pro workflows · integration tips</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--c),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📦 Subfinder — Complete Setup & Usage</div><div class="badge b1">BEGINNER</div></div>
+    <div class="flow">
+      <div class="fs"><div class="fs-t">Install</div><div class="fs-d"><code>go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest</code></div></div>
+      <div class="fs"><div class="fs-t">Configure API keys (critical for max results)</div><div class="fs-d">Edit <code>~/.config/subfinder/provider-config.yaml</code> — add free API keys for: Shodan, SecurityTrails, Censys, GitHub, VirusTotal, Chaos. Each source dramatically increases subdomain count.</div></div>
+      <div class="fs"><div class="fs-t">Basic to advanced usage</div><div class="fs-d"><code>subfinder -d target.com -all -silent -o subs.txt</code> then pipe to <code>dnsx</code> for resolution and <code>httpx</code> for live host detection.</div></div>
+      <div class="fs"><div class="fs-t">Pipeline integration</div><div class="fs-d">Chain tools: subfinder → dnsx → httpx → nuclei for full recon-to-scan pipeline. Or subfinder → ffuf for subdomain brute-forcing newly discovered assets.</div></div>
+    </div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">SUBFINDER ADVANCED USAGE</div></div>
+      <div class="tb">
+<span class="p">$</span> <span class="cmd">subfinder -d target.com -all -silent | httpx -title -status-code -tech-detect</span>
+<span class="p">$</span> <span class="cmd">subfinder -dL domains.txt -all -o all_subs.txt && cat all_subs.txt | dnsx -resp</span>
+<span class="p">$</span> <span class="cmd">subfinder -d target.com -sources shodan,censys,crtsh,github</span>
+<span class="p">$</span> <span class="cmd">subfinder -d target.com -all | dnsx -cname -mx -ns -resp -silent</span>
+<span class="ok">[✓] Combine: subfinder + amass + assetfinder + crt.sh for maximum coverage</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--re),var(--or))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔭 Shodan CLI — Full Setup & Workflow</div><div class="badge b3">ADVANCED</div></div>
+    <div class="flow">
+      <div class="fs"><div class="fs-t">Install and initialize</div><div class="fs-d"><code>pip install shodan && shodan init YOUR_API_KEY</code> — Free key from shodan.io/dashboard. Membership (~$49/year) unlocks bulk download and advanced queries.</div></div>
+      <div class="fs"><div class="fs-t">Search → Download → Parse → Feed pipeline</div><div class="fs-d">Don't just search in the web UI. Download raw data, parse fields, feed IPs to httpx/nuclei for automated vulnerability detection across the entire infrastructure.</div></div>
+      <div class="fs"><div class="fs-t">Set up passive monitoring alerts</div><div class="fs-d"><code>shodan alert create</code> — Shodan emails you when new assets matching your query appear on the internet. Passive, continuous attack surface monitoring.</div></div>
+    </div>
+    <div class="term">
+      <div class="th"><div class="dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div><div class="tl">SHODAN ADVANCED WORKFLOW</div></div>
+      <div class="tb">
+<span class="p">$</span> <span class="cmd">shodan search 'org:"Target"' --fields ip_str,port,product --limit 1000</span>
+<span class="p">$</span> <span class="cmd">shodan download raw 'ssl.cert.subject.CN:"*.target.com"'</span>
+<span class="p">$</span> <span class="cmd">shodan parse raw.json.gz --fields ip_str,port > targets.txt</span>
+<span class="p">$</span> <span class="cmd">cat targets.txt | httpx -status-code -title -silent</span>
+<span class="p">$</span> <span class="cmd">cat targets.txt | nuclei -t cves/ -severity critical,high</span>
+<span class="p">$</span> <span class="cmd">shodan alert create monitor_target 'org:"Target Corp"'</span>
+<span class="p">$</span> <span class="cmd">shodan stats --facets port,os,country 'org:"Target"'</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-ll">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pi),var(--pu))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🧠 Volatility3 — Full Investigation Workflow</div><div class="badge b4">ELITE</div></div>
+    <div class="flow">
+      <div class="fs"><div class="fs-t">Install Volatility3</div><div class="fs-d"><code>git clone https://github.com/volatilityfoundation/volatility3.git && cd volatility3 && pip install -r requirements.txt</code></div></div>
+      <div class="fs"><div class="fs-t">Acquire memory first (before analysis)</div><div class="fs-d">Windows: <code>winpmem_mini_x64.exe ram.dmp</code> — Linux: compile LiME for exact kernel version and load: <code>sudo insmod lime.ko "path=/evidence/ram.lime format=lime"</code></div></div>
+      <div class="fs"><div class="fs-t">Always start with windows.info</div><div class="fs-d"><code>vol3 -f ram.dmp windows.info</code> — confirms OS, build, architecture. Ensures Volatility can parse the image correctly. Never skip this step.</div></div>
+      <div class="fs"><div class="fs-t">Follow the systematic investigation path</div><div class="fs-d">pslist → psscan → pstree → cmdline → netstat → malfind → dumpfiles. Each step builds context. Document every finding with PID and timestamp.</div></div>
+      <div class="fs"><div class="fs-t">Cross-reference and correlate findings</div><div class="fs-d">Suspicious process from pslist → check its cmdline → check its network connections → check its loaded DLLs → dump and analyze with VirusTotal/YARA.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ RESOURCES ════ -->
+<div class="sec" id="resources">
+  <div class="sh"><div class="sh-ic">📚</div><div><div class="sh-t">Learning Resources — Curated</div><div class="sh-s">// courses · books · YouTube · blogs · certifications · free datasets · practice labs</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--c),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🎓 Courses & Certifications</div></div>
+    <div class="g2">
+      <div class="rc">
+        <div class="rc-cat">CERTIFICATION</div>
+        <div class="rc-name">SANS FOR508 — Advanced IR & Threat Hunting</div>
+        <div class="rc-desc">Industry gold standard for DFIR. Covers memory, disk, timeline analysis. GCFE/GCFA certification on completion.</div>
+        <a class="rc-link" href="https://www.sans.org/cyber-security-courses/advanced-incident-response-threat-hunting-training/" target="_blank">→ sans.org/for508</a>
+        <div><span class="rc-tag">Professional</span><span class="rc-tag">GCFE/GCFA</span><span class="rc-tag">Expensive</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">AFFORDABLE COURSE</div>
+        <div class="rc-name">TCM Security — Practical OSINT</div>
+        <div class="rc-desc">Practical OSINT course by Heath Adams. Real-world techniques, video-based, excellent beginner to advanced pathway.</div>
+        <a class="rc-link" href="https://academy.tcm-sec.com/p/osint-fundamentals" target="_blank">→ academy.tcm-sec.com</a>
+        <div><span class="rc-tag">Paid ~$30</span><span class="rc-tag">Beginner→Advanced</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">FREE FRAMEWORK</div>
+        <div class="rc-name">OSINT Framework</div>
+        <div class="rc-desc">Interactive visual map of all OSINT tools categorized by data type. Perfect reference for finding the right tool for any target type.</div>
+        <a class="rc-link" href="https://osintframework.com" target="_blank">→ osintframework.com</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Interactive</span><span class="rc-tag">Reference</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">FREE GUIDES</div>
+        <div class="rc-name">Bellingcat Online Investigation Toolkit</div>
+        <div class="rc-desc">World's best OSINT investigation guides. Geolocation, social media, image analysis from real investigative journalists who locate war criminals.</div>
+        <a class="rc-link" href="https://www.bellingcat.com/resources/how-tos/" target="_blank">→ bellingcat.com/resources</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">OSINT</span><span class="rc-tag">Investigative</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">FREE YOUTUBE</div>
+        <div class="rc-name">13Cubed — Windows Forensics Deep Dives</div>
+        <div class="rc-desc">Richard Davis — best YouTube channel for Windows forensics. In-depth, practical, well-structured artifact tutorials. Subscribe immediately.</div>
+        <a class="rc-link" href="https://www.youtube.com/@13Cubed" target="_blank">→ youtube.com/@13Cubed</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Windows</span><span class="rc-tag">Excellent Quality</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">FREE DOCS</div>
+        <div class="rc-name">Volatility3 Official Documentation</div>
+        <div class="rc-desc">Official documentation, plugin guides, and sample memory images for practice. The authoritative starting point for memory forensics.</div>
+        <a class="rc-link" href="https://volatility3.readthedocs.io" target="_blank">→ volatility3.readthedocs.io</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Memory Forensics</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pu),var(--pi))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🧪 Practice Datasets & Sample Files</div></div>
+    <div class="g2">
+      <div class="rc">
+        <div class="rc-cat">MEMORY SAMPLES</div>
+        <div class="rc-name">Volatility Memory Samples — GitHub</div>
+        <div class="rc-desc">Official collection of Windows, Linux, and Mac memory dumps for practice. Multiple scenarios and OS versions. Free to download.</div>
+        <a class="rc-link" href="https://github.com/volatilityfoundation/volatility/wiki/Memory-Samples" target="_blank">→ github.com/volatility samples</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Memory</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">PCAP SAMPLES</div>
+        <div class="rc-name">Malware-Traffic-Analysis.net</div>
+        <div class="rc-desc">Hundreds of real malware PCAP files with full answers and notes. Best source for practicing network forensics and C2 traffic analysis.</div>
+        <a class="rc-link" href="https://www.malware-traffic-analysis.net" target="_blank">→ malware-traffic-analysis.net</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Real Malware PCAPs</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">MALWARE SAMPLES</div>
+        <div class="rc-name">MalwareBazaar — abuse.ch</div>
+        <div class="rc-desc">Repository of malware samples for security research. Search by family, tag, file type. Use only in isolated sandbox environments.</div>
+        <a class="rc-link" href="https://bazaar.abuse.ch" target="_blank">→ bazaar.abuse.ch</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Sandboxed Only</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">TOOL COLLECTION</div>
+        <div class="rc-name">Eric Zimmerman's Tools — Free</div>
+        <div class="rc-desc">KAPE, MFTECmd, EvtxECmd, LECmd, PECmd, Timeline Explorer — all free. Industry-standard Windows forensics tools from Mandiant/Kroll expert.</div>
+        <a class="rc-link" href="https://ericzimmerman.github.io" target="_blank">→ ericzimmerman.github.io</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Windows Forensics</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ WRITEUPS ════ -->
+<div class="sec" id="writeups">
+  <div class="sh"><div class="sh-ic">✍️</div><div><div class="sh-t">Writeups & Case Studies</div><div class="sh-s">// how to find · how to read effectively · how to write your own · best sources</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--or),var(--ye))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📖 How to Read a Writeup Effectively</div></div>
+    <div class="flow">
+      <div class="fs"><div class="fs-t">Attempt the challenge first — even partially</div><div class="fs-d">Try for at least 30 minutes before reading the writeup. Compare your approach. The gap between your thinking and the solution is where learning happens.</div></div>
+      <div class="fs"><div class="fs-t">Understand the WHY, not just the HOW</div><div class="fs-d">Ask: "Why did they run this command here?" "How did they know to look in that location?" The reasoning pattern matters more than the exact commands used.</div></div>
+      <div class="fs"><div class="fs-t">Reproduce every step in your own environment</div><div class="fs-d">Download the challenge file and follow along hands-on. Watching someone else solve it builds almost no skill. Doing it yourself builds everything.</div></div>
+      <div class="fs"><div class="fs-t">Extract reusable techniques to your notes</div><div class="fs-d">Maintain notes in Obsidian or CherryTree. Save commands, techniques, and tool flags you didn't know. Build your own personal cheatsheet over months.</div></div>
+      <div class="fs"><div class="fs-t">Write and publish your own writeup</div><div class="fs-d">Writing forces clarity of understanding. Even failed approaches are valuable. Publish on Medium or GitHub — it builds your portfolio visible to employers and the community.</div></div>
+    </div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--bl),var(--c))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔗 Best Writeup Sources</div></div>
+    <div class="g2">
+      <div class="rc">
+        <div class="rc-cat">PLATFORM</div>
+        <div class="rc-name">Medium — CTF Writeups Tag</div>
+        <div class="rc-desc">Largest collection of CTF writeups. Search "HTB Sherlocks writeup" or "CyberDefenders writeup" for specific challenges. Multiple authors = multiple perspectives.</div>
+        <a class="rc-link" href="https://medium.com/tag/ctf-writeup" target="_blank">→ medium.com/tag/ctf-writeup</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">High Volume</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">PLATFORM</div>
+        <div class="rc-name">GitHub — CTF Writeup Repos</div>
+        <div class="rc-desc">Teams maintain public writeup repos with scripts and code included. Search "CTF writeup OSINT 2024" or "sherlocks writeup" for specific scenarios.</div>
+        <a class="rc-link" href="https://github.com/search?q=ctf+writeup+forensics&type=repositories" target="_blank">→ github.com/search ctf writeup</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Code Included</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">BLOG</div>
+        <div class="rc-name">Inversecos — DFIR Writeups</div>
+        <div class="rc-desc">Detailed incident response and forensics case writeups with step-by-step analysis. Real-world scenarios explained with professional methodology.</div>
+        <a class="rc-link" href="https://www.inversecos.com" target="_blank">→ inversecos.com</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Professional Quality</span></div>
+      </div>
+      <div class="rc">
+        <div class="rc-cat">BLOG</div>
+        <div class="rc-name">Hexacorn — Windows Internals</div>
+        <div class="rc-desc">Adam Gowdiak's deep technical posts on Windows internals, persistence mechanisms, and forensic artifacts. Expert-level, cited widely in the field.</div>
+        <a class="rc-link" href="https://www.hexacorn.com/blog/" target="_blank">→ hexacorn.com/blog</a>
+        <div><span class="rc-tag">Free</span><span class="rc-tag">Advanced Windows</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--gr),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">✍️ Writeup Template — Publish Yours</div></div>
+    <div class="tbl"><table>
+      <tr><th>Section</th><th>What to Include</th><th>Why Important</th></tr>
+      <tr><td>Challenge Info</td><td>Name, platform, category, difficulty, date</td><td>Context for search indexing and readers</td></tr>
+      <tr><td>Initial Recon</td><td>What you were given, first observations</td><td>Shows analytical starting point to readers</td></tr>
+      <tr><td>Failed Attempts</td><td>What didn't work and why</td><td>Most valuable section — prevents wasted time for others</td></tr>
+      <tr><td>Key Discovery</td><td>The pivot or technique that cracked it</td><td>Core transferable skill insight</td></tr>
+      <tr><td>Step-by-Step</td><td>Every command with output and explanation</td><td>Makes it reproducible for others to learn from</td></tr>
+      <tr><td>Lessons Learned</td><td>What you'd do differently, new techniques</td><td>Shows growth mindset valued by employers</td></tr>
+      <tr><td>References</td><td>Tools used, resources that helped you</td><td>Credits community knowledge, adds credibility</td></tr>
+    </table></div>
+    <div class="al a-c"><div>💡</div><div class="al-b"><div class="at">PUBLISH = PORTFOLIO</div><div class="al-x">Cybersecurity employers actively search for candidates with published writeups. Even messy, imperfect writeups demonstrate hands-on skill, learning mindset, and communication ability — all qualities hiring managers look for. Consistency matters more than perfection. Start publishing now.</div></div></div>
+  </div>
+</div>
+
+<!-- ════ OPSEC ════ -->
+<div class="sec" id="opsec">
+  <div class="sh"><div class="sh-ic">🛡️</div><div><div class="sh-t">Investigator OPSEC</div><div class="sh-s">// anonymity · footprint reduction · VM isolation · sock puppets · documentation standards</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--bl),var(--c))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🎭 Investigation OPSEC Architecture</div><div class="badge b3">ADVANCED</div></div>
+    <div class="g2">
+      <div>
+        <div style="font-family:var(--mo);font-size:9px;color:var(--c);letter-spacing:2px;margin-bottom:12px">// ISOLATION LAYERS</div>
+        <div class="flow">
+          <div class="fs"><div class="fs-t">Dedicated OS — never your daily machine</div><div class="fs-d">Tails OS (amnesic, no traces), Whonix (routes all traffic via Tor), or clean Kali VM. Snapshot before investigation, revert after.</div></div>
+          <div class="fs"><div class="fs-t">VPN → Tor Browser chain</div><div class="fs-d">VPN first (Mullvad or ProtonVPN), then Tor. Tor entry node sees VPN IP, not your real IP. Use only for investigation activities.</div></div>
+          <div class="fs"><div class="fs-t">Sock puppet accounts for platform access</div><div class="fs-d">Created on mobile data, separate email, different browser profile. Age accounts for 2+ weeks before use. No cross-linking to real identity.</div></div>
+          <div class="fs"><div class="fs-t">Never visit targets directly</div><div class="fs-d">Use Google Cache, archive.ph, Startpage for Google proxying. Your IP appearing in target's logs exposes the investigation.</div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--mo);font-size:9px;color:var(--re);letter-spacing:2px;margin-bottom:12px">// WHAT EXPOSES YOU</div>
+        <ul class="l">
+          <li><strong>LinkedIn profile view while logged in</strong> — target gets notification you viewed them</li>
+          <li><strong>Direct target website visit</strong> — your IP in server, CDN, and WAF logs</li>
+          <li><strong>Google search while signed in</strong> — all searches tied to identity</li>
+          <li><strong>Browser fingerprinting</strong> — canvas, WebGL, fonts, resolution are unique</li>
+          <li><strong>File metadata in shared files</strong> — machine username, timezone, software</li>
+          <li><strong>Stylometry</strong> — your writing patterns identify you across platforms</li>
+          <li><strong>Post timing patterns</strong> — when you post reveals timezone and schedule</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--gr),var(--c))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">📁 Documentation Standards</div><div class="badge b2">INTERMEDIATE</div></div>
+    <ul class="l">
+      <li><strong>Hunchly</strong> — Chrome extension that auto-captures every visited page with timestamp. Creates court-ready reports automatically. Essential for all serious OSINT work.</li>
+      <li><strong>CherryTree or Obsidian</strong> — Hierarchical encrypted notes for investigations. Organize by: target → category → finding → evidence. Free and fully offline.</li>
+      <li><strong>Archive.ph + Wayback Machine</strong> — Archive target pages before they disappear. Social media posts get deleted within hours during incidents.</li>
+      <li><strong>Screenshot everything with URL bar visible</strong> — shows source and timestamp. Never rely on memory or text notes alone for evidence.</li>
+      <li><strong>Hash all evidence files immediately</strong> — SHA256 every screenshot, PCAP, and document as soon as collected. Proves integrity later.</li>
+      <li><strong>Document negative results too</strong> — what you didn't find is also intelligence. Record where you looked and what was absent.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ════ ARSENAL ════ -->
+<div class="sec" id="arsenal">
+  <div class="sh"><div class="sh-ic">🛠️</div><div><div class="sh-t">Complete Tools Arsenal</div><div class="sh-s">// 80+ tools · categorized · skill-level rated · with links and key commands</div></div></div>
+
+  <div class="card ai">
+    <div class="cs" style="background:linear-gradient(90deg,var(--c),var(--bl))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔍 OSINT Tools — Complete Reference</div></div>
+    <div class="tbl"><table>
+      <tr><th>Tool</th><th>Purpose</th><th>Key Command</th><th>Level</th></tr>
+      <tr><td>theHarvester</td><td>Email/Subdomain/IP harvesting</td><td>theHarvester -d target.com -b all</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>Subfinder</td><td>Passive subdomain discovery</td><td>subfinder -d target.com -all</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>Amass</td><td>Active+passive DNS enumeration</td><td>amass enum -passive -d target.com</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>dnsx</td><td>DNS resolution + querying</td><td>cat subs.txt | dnsx -resp -silent</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>httpx</td><td>HTTP probing + tech detect</td><td>cat hosts.txt | httpx -status-code -title</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>Shodan CLI</td><td>Infrastructure search</td><td>shodan search 'org:"Target"'</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Censys</td><td>TLS/certificate intelligence</td><td>censys.io + API: parsed.names:"domain"</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Sherlock</td><td>Username search (400+ sites)</td><td>python3 sherlock username</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>Maigret</td><td>Username search (3000+ sites)</td><td>maigret username --html</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>holehe</td><td>Email site registration check</td><td>holehe email@target.com</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>h8mail</td><td>Email breach database search</td><td>h8mail -t email -c config.ini -o out.csv</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>TruffleHog</td><td>Git secrets scanner</td><td>trufflehog github --org=target --only-verified</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Gitleaks</td><td>Git secret detection</td><td>gitleaks detect --source . -r report.json</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>exiftool</td><td>File metadata extraction</td><td>exiftool -r /folder/ -csv > out.csv</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>waybackurls</td><td>Archive URL harvesting</td><td>echo domain | waybackurls > urls.txt</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>katana</td><td>Modern web crawling + JS</td><td>katana -u https://target.com -jc -d 3</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>jsluice</td><td>JS endpoint + secret extraction</td><td>cat bundle.js | jsluice secrets</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>SpiderFoot</td><td>OSINT automation framework</td><td>python3 sf.py -s target.com -t INTERNET_NAME</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>recon-ng</td><td>Modular OSINT framework</td><td>recon-ng → workspaces create target</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Maltego</td><td>Visual link analysis</td><td>GUI — maltego.com (paid)</td><td><span class="badge b4">ELITE</span></td></tr>
+    </table></div>
+  </div>
+
+  <div class="card ai ai-l">
+    <div class="cs" style="background:linear-gradient(90deg,var(--pu),var(--pi))"></div>
+    <div class="card-hl"></div>
+    <div class="ch"><div class="ct">🔬 Forensics Tools — Complete Reference</div></div>
+    <div class="tbl"><table>
+      <tr><th>Tool</th><th>Purpose</th><th>Key Command</th><th>Level</th></tr>
+      <tr><td>Autopsy</td><td>GUI disk forensics platform</td><td>GUI → autopsy.sleuthkit.org</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>FTK Imager</td><td>Imaging + evidence preview</td><td>GUI → accessdata.com</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>dcfldd</td><td>Imaging with live hashing</td><td>dcfldd if=/dev/sdb of=disk.img md5log=h</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>ewfacquire</td><td>E01 format court-ready imaging</td><td>ewfacquire -f encase6 /dev/sdb</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>KAPE</td><td>Fast triage artifact collection</td><td>kape.exe --tsource C: --target !BasicCollection</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>Volatility 3</td><td>Memory forensics framework</td><td>vol3 -f ram.dmp windows.pslist</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>LiME</td><td>Linux memory acquisition</td><td>insmod lime.ko "path=/ram.lime format=lime"</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Plaso/L2T</td><td>Super timeline generation</td><td>log2timeline.py case.plaso disk.img</td><td><span class="badge b4">ELITE</span></td></tr>
+      <tr><td>EvtxECmd</td><td>Windows event log parser</td><td>EvtxECmd.exe -d Logs\ --csv out\</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>RegRipper</td><td>Registry artifact parser</td><td>rip.pl -r NTUSER.DAT -f ntuser</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>MFTECmd</td><td>NTFS MFT parser</td><td>MFTECmd.exe -f $MFT --csv out\</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Wireshark</td><td>GUI packet analysis</td><td>GUI → wireshark.org</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>tshark</td><td>CLI packet analysis</td><td>tshark -r cap.pcap -Y http -T fields</td><td><span class="badge b2">INT</span></td></tr>
+      <tr><td>Zeek (Bro)</td><td>Network security monitoring</td><td>zeek -r capture.pcap</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Foremost</td><td>File carving by signatures</td><td>foremost -t jpg,pdf -i disk.img -o out/</td><td><span class="badge b1">BEG</span></td></tr>
+      <tr><td>FLOSS</td><td>Malware string deobfuscation</td><td>floss malware.exe</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>YARA</td><td>Malware pattern matching</td><td>yara -r /rules/ malware.exe</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>Ghidra</td><td>NSA free disassembler/decompiler</td><td>GUI → ghidra-sre.org</td><td><span class="badge b4">ELITE</span></td></tr>
+      <tr><td>x64dbg</td><td>Windows debugger</td><td>GUI → x64dbg.com</td><td><span class="badge b4">ELITE</span></td></tr>
+      <tr><td>REMnux</td><td>Malware analysis Linux distro</td><td>VM image → remnux.org</td><td><span class="badge b3">ADV</span></td></tr>
+      <tr><td>FlareVM</td><td>Windows malware analysis distro</td><td>Mandiant setup script → github</td><td><span class="badge b3">ADV</span></td></tr>
+    </table></div>
+  </div>
+</div>
+
+</div><!-- end wrap -->
+</div><!-- end app -->
+
+<script>
+// ─── LOADER ───
+const logs=['> Booting neural network...','> Loading particle engine...','> Compiling hex grid renderer...','> Initializing intelligence modules...','> Loading 80+ tools database...','> Mapping CTF knowledge graph...','> Syncing resource index...','> All systems operational.'];
+let li=0,pct=0;
+const lpct=document.getElementById('lpct');
+const llog=document.getElementById('llog');
+const logInterval=setInterval(()=>{
+  if(li<logs.length){llog.textContent=logs[li++]}
+  pct=Math.min(pct+Math.random()*14+5,100);
+  lpct.textContent=Math.round(pct)+'%';
+  if(pct>=100){clearInterval(logInterval)}
+},350);
+setTimeout(()=>{
+  const l=document.getElementById('ldr');
+  l.style.animation='fdOut 0.5s ease forwards';
+  setTimeout(()=>{
+    l.style.display='none';
+    initCanvas();initCursor();animateStats();initObserver();
+  },500);
+},3200);
+
+// ─── CANVAS ───
+function initCanvas(){
+  const c=document.getElementById('gc'),ctx=c.getContext('2d');
+  const resize=()=>{c.width=window.innerWidth;c.height=window.innerHeight};
+  resize();window.addEventListener('resize',resize);
+  const pts=Array.from({length:65},()=>({
+    x:Math.random()*c.width,y:Math.random()*c.height,
+    vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,
+    r:Math.random()*1.1+.3,
+    col:['#00ffcc','#1e90ff','#b000ff','#ff0066'][Math.floor(Math.random()*4)],
+    a:Math.random()*.35+.1
+  }));
+  function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>c.width)p.vx*=-1;
+      if(p.y<0||p.y>c.height)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.col+Math.floor(p.a*255).toString(16).padStart(2,'0');
+      ctx.fill();
+    });
+    pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{
+      const d=Math.hypot(p.x-q.x,p.y-q.y);
+      if(d<85){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);
+        ctx.strokeStyle=`rgba(0,255,204,${(1-d/85)*0.055})`;ctx.lineWidth=.5;ctx.stroke();}
+    }));
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ─── CURSOR ───
+function initCursor(){
+  const g=document.getElementById('cur');
+  document.addEventListener('mousemove',e=>{g.style.left=e.clientX+'px';g.style.top=e.clientY+'px'});
+}
+
+// ─── STATS ───
+function animateStats(){
+  document.querySelectorAll('[data-c]').forEach(el=>{
+    const t=parseInt(el.dataset.c);let cur=0;
+    const s=Math.ceil(t/55);
+    const ti=setInterval(()=>{cur=Math.min(cur+s,t);el.textContent=cur+(t>9?'+':'');if(cur>=t)clearInterval(ti)},30);
+  });
+}
+
+// ─── OBSERVER ───
+function initObserver(){
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('vis'),i*75)});
+  },{threshold:.07});
+  document.querySelectorAll('.ai').forEach(el=>obs.observe(el));
+}
+
+// ─── NAV ───
+function show(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nt').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  window.scrollTo({top:document.getElementById('app').offsetTop-50,behavior:'smooth'});
+  setTimeout(()=>{
+    document.querySelectorAll('#'+id+' .ai').forEach((el,i)=>{
+      el.classList.remove('vis');
+      setTimeout(()=>el.classList.add('vis'),i*90);
+    });
+  },60);
+}
+
+// ─── ENTER ───
+function enterApp(){
+  const h=document.getElementById('hero');
+  h.style.transition='opacity .6s,transform .6s';
+  h.style.opacity='0';h.style.transform='scale(.97)';
+  setTimeout(()=>{
+    h.style.display='none';
+    document.getElementById('app').style.display='block';
+    window.scrollTo(0,0);animateStats();
+    setTimeout(()=>{
+      document.querySelectorAll('#roadmap .ai').forEach((el,i)=>setTimeout(()=>el.classList.add('vis'),i*90));
+    },200);
+  },600);
+}
+</script>
+</body>
+</html>
